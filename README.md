@@ -35,5 +35,5 @@ java -jar cabs.jar source_input.c target_input.c source_output.c target_output.c
 
 Specific examples can be viewed in trans.py in the data folder.
 
-The source code of SCAN is also available on GitHub https://github.com/Tomsawyerhu/cabs
+The source code of SCAN is also available on GitHub https://github.com/QuanjunZhang/SCAN
 
