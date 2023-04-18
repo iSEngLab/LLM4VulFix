@@ -1323,7 +1323,9 @@ def shuffledata(split,type):
     target = target[:int(len(target)*split)]
     print(source)
 if __name__=="__main__":
-    shuffledata(0.2,"test")
+    df = pd.read_csv("bugfix_train.csv")
+    print(len(df))
+    # shuffledata(0.2,"test")
     # noctx("train")
     # noctx("val")
     # noctx("test")

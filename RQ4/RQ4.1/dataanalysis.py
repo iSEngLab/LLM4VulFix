@@ -1,5 +1,6 @@
 import math
 
+import numpy as np
 import pandas as pd
 def tokenlenstat(path1,tokenizer_name):
     model_name = path1.split("/")[2]
@@ -51,9 +52,24 @@ def tokenlenstat(path1,tokenizer_name):
         accu.append(m_all[i]/len_all[i])
     df2["accuracy"] = accu
     df2.to_csv("./Original/{}_stat4.csv".format(model_name))
-
+def tokenlenstatcsv(path1,tokenizer_name):
+    model_name = path1.split("/")[2]
+    model_name = model_name.split("_")[0]
+    df = pd.read_csv(path1)
+    s = df["source"]
+    from transformers import RobertaTokenizer
+    tokenizer = RobertaTokenizer.from_pretrained(tokenizer_name)
+    # tokenizer.add_tokens(["<S2SV_StartBug>", "<S2SV_EndBug>", "<S2SV_blank>", "<S2SV_ModStart>", "<S2SV_ModEnd>"])
+    source = []
+    match = []
+    tokenlen = []
+    for i in range(len(s)):
+        source.append(s[i])
+        tokenlen.append(len(tokenizer.encode(s[i])))
+    print(np.mean((tokenlen)))
 if __name__ =="__main__":
-    tokenlenstat("./Original/CodeBERT_ori.txt","microsoft/codebert-base")
-    tokenlenstat("./Original/CodeT5_ori.txt", "Salesforce/codet5-base")
-    tokenlenstat("./Original/GraphCodeBERT_ori.txt", "microsoft/graphcodebert-base")
-    tokenlenstat("./Original/UniXcoder_ori.txt", "microsoft/unixcoder-base")
+    # tokenlenstat("./Original/CodeBERT_ori.txt","microsoft/codebert-base")
+    # tokenlenstat("./Original/CodeT5_ori.txt", "Salesforce/codet5-base")
+    # tokenlenstat("./Original/GraphCodeBERT_ori.txt", "microsoft/graphcodebert-base")
+    # tokenlenstat("./Original/UniXcoder_ori.txt", "microsoft/unixcoder-base")
+    tokenlenstatcsv("./Original/dl_whole.csv", "microsoft/codebert-base")
