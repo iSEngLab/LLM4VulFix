@@ -11,7 +11,6 @@ from transformers import (AdamW, get_linear_schedule_with_warmup,
                           GPT2LMHeadModel)
 from tqdm import tqdm
 import pandas as pd
-from torch.utils.tensorboard import SummaryWriter
 
 cpu_cont = 16
 logger = logging.getLogger(__name__)
@@ -60,11 +59,11 @@ class TextDataset(Dataset):
 
 def convert_examples_to_features(source, label, tokenizer, args):
     # encode
-    source_ids = tokenizer.encode(source, truncation=True, max_length=args.encoder_block_size, padding='max_length',
+    source_ids = tokenizer.encode("<|startoftext|>"+source+"<|endoftext|>", truncation=True, max_length=args.encoder_block_size, padding='max_length',
                                   return_tensors='pt')
-    decoder_input_ids = tokenizer.encode(label, truncation=True, max_length=args.decoder_block_size,
+    decoder_input_ids = tokenizer.encode("<|startoftext|>"+label+"<|endoftext|>", truncation=True, max_length=args.decoder_block_size,
                                          padding='max_length', return_tensors='pt')
-    label = tokenizer.encode(label, truncation=True, max_length=args.decoder_block_size, padding='max_length',
+    label = tokenizer.encode("<|startoftext|>"+label+"<|endoftext|>", truncation=True, max_length=args.decoder_block_size, padding='max_length',
                              return_tensors='pt')
     return InputFeatures(source_ids, label, decoder_input_ids)
 
@@ -121,9 +120,8 @@ def train(args, train_dataset, model, tokenizer, eval_dataset):
     global_step = 0
     tr_loss, logging_loss, avg_loss, tr_nb, tr_num, train_loss = 0.0, 0.0, 0.0, 0, 0, 0
     best_loss = 100
+    early_stop = 0
 
-    writer_path = "tb/GPT2_training_loss"
-    writer = SummaryWriter(writer_path)
 
     model.zero_grad()
 
@@ -162,6 +160,7 @@ def train(args, train_dataset, model, tokenizer, eval_dataset):
                     eval_loss = evaluate(args, model, tokenizer, eval_dataset, eval_when_training=True)
                     # Save model checkpoint
                     if eval_loss < best_loss:
+                        early_stop=0
                         best_loss = eval_loss
                         logger.info("  " + "*" * 20)
                         logger.info("  Best Loss:%s", round(best_loss, 4))
@@ -174,12 +173,16 @@ def train(args, train_dataset, model, tokenizer, eval_dataset):
                         output_dir = os.path.join(output_dir, '{}'.format(args.model_name))
                         torch.save(model_to_save.state_dict(), output_dir)
                         logger.info("Saving model checkpoint to %s", output_dir)
-
+                    else:
+                        early_stop+=1
+                    if early_stop == 3 and idx>=75:
+                        logger.info("two epoches passed after last saving,early stopped.")
+                        return 0
 
 def clean_tokens(tokens):
     tokens = tokens.replace("<pad>", "")
-    tokens = tokens.replace("<s>", "")
-    tokens = tokens.replace("</s>", "")
+    tokens = tokens.replace("<|startoftext|>", "")
+    tokens = tokens.replace("<|endoftext|>", "")
     tokens = tokens.strip("\n")
     tokens = tokens.strip()
     return tokens
@@ -363,11 +366,8 @@ def main():
     logger.warning("device: %s, n_gpu: %s", device, args.n_gpu, )
     # Set seed
     set_seed(args)
-    config = GPT2Config.from_pretrained("gpt2")
-    config.pad_token_id = 50257
-    tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
-    tokenizer.add_tokens(["<pad>"])
-    tokenizer.pad_token = "<pad>"
+    tokenizer = GPT2Tokenizer.from_pretrained('gpt2', bos_token='<|startoftext|>', eos_token='<|endoftext|>',
+                                              pad_token='<|pad|>')  # gpt2-medium
     tokenizer.add_tokens(["<S2SV_StartBug>", "<S2SV_EndBug>", "<S2SV_blank>", "<S2SV_ModStart>", "<S2SV_ModEnd>"])
     model = GPT2LMHeadModel.from_pretrained("gpt2")
     model.resize_token_embeddings(len(tokenizer))
