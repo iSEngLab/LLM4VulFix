@@ -175,7 +175,7 @@ def train(args, train_dataset, model, tokenizer, eval_dataset):
                         logger.info("Saving model checkpoint to %s", output_dir)
                     else:
                         early_stop+=1
-                    if early_stop == 3 and idx>=75:
+                    if early_stop == 3:
                         logger.info("two epoches passed after last saving,early stopped.")
                         return 0
 
