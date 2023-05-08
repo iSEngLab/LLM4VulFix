@@ -180,7 +180,7 @@ def train(args, train_dataset, model, tokenizer, eval_dataset):
                         return 0
 
 def clean_tokens(tokens):
-    tokens = tokens.replace("<pad>", "")
+    tokens = tokens.replace("<|pad|>", "")
     tokens = tokens.replace("<|startoftext|>", "")
     tokens = tokens.replace("<|endoftext|>", "")
     tokens = tokens.strip("\n")
@@ -281,6 +281,7 @@ def test(args, model, tokenizer, test_dataset, best_threshold=0.5):
         f.write("raw_predictions:\n")
         for i in r:
             f.write(i + "\n")
+            f.write("-"*20 + "\n")
     df["raw_predictions"] = raw_predictions
     df["correctly_predicted"] = accuracy
 
@@ -368,7 +369,6 @@ def main():
     set_seed(args)
     tokenizer = GPT2Tokenizer.from_pretrained('gpt2', bos_token='<|startoftext|>', eos_token='<|endoftext|>',
                                               pad_token='<|pad|>')  # gpt2-medium
-    tokenizer.add_tokens(["<S2SV_StartBug>", "<S2SV_EndBug>", "<S2SV_blank>", "<S2SV_ModStart>", "<S2SV_ModEnd>"])
     model = GPT2LMHeadModel.from_pretrained("gpt2")
     model.resize_token_embeddings(len(tokenizer))
     model.to(device)
