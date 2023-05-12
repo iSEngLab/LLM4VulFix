@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import math
 import os
 import random
@@ -1367,8 +1368,8 @@ def complete(type):
     idx = 0
     group_idx = 0
     for s, t in tzip(source, target):
-        s = s.strip()
-        t = t.strip()
+        s = s.strip().replace("<S2SV_blank>", "")
+        t = t.strip().replace("<S2SV_blank>", "")
         if s == "" or t == "":
             continue
         # 处理source
@@ -1649,6 +1650,33 @@ def complete(type):
     df["group"] = group_filtered
     df.to_csv("cve_fixes_{}_gpt.csv".format(type), encoding='utf-8')
 
+def is_utf8(s):
+    try:
+        s.encode('utf-8').decode('utf-8')
+        return True
+    except UnicodeDecodeError:
+        return False
+
+def toTxt(path):
+    type = path.split("_")[2]
+    if type == "val":
+        type = "valid"
+    df = pd.read_csv(path, encoding='utf-8')
+    buggy = df["source"]
+    fixed = df["target"]
+    print(len(buggy))
+    f1 = open("./gptdata/buggy_methods_{}.txt".format(type), 'a', encoding='utf-8')
+    f2 = open("./gptdata/fixed_methods_{}.txt".format(type), 'a', encoding='utf-8')
+    count = 0
+    for b, f in zip(buggy, fixed):
+        if is_utf8(b) and is_utf8(f):
+            f1.write(b.strip() + "\n")
+            f2.write(f.strip() + "\n")
+            count+=1
+    print(count)
+    f1.close()
+    f2.close()
+
 
 if __name__ == "__main__":
     # df = pd.read_csv("bugfix_train.csv")
@@ -1678,6 +1706,15 @@ if __name__ == "__main__":
     # prompt("train")
     # prompt("val")
     # prompt("test")
-    complete("train")
-    complete("val")
-    complete("test")
+    # complete("train")
+    # complete("val")
+    # complete("test")
+    toTxt("cve_fixes_train_gpt.csv")
+    toTxt("cve_fixes_val_gpt.csv")
+    toTxt("cve_fixes_test_gpt.csv")
+    # f = open("gptdata/fixed_methods_train.txt",'r',encoding = 'utf-8')
+    # for i in range(10000):
+    #     try:
+    #         line = f.readline()
+    #     except UnicodeDecodeError:
+    #         print(i)
