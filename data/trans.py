@@ -1649,7 +1649,297 @@ def complete(type):
     df["target"] = res_target_filtered
     df["group"] = group_filtered
     df.to_csv("cve_fixes_{}_gpt.csv".format(type), encoding='utf-8')
+def completeabs(type):
+    df = pd.read_csv("cve_fixes_{}_absreplace.csv".format(type), encoding='utf-8')
+    source = np.array(df["source"]).tolist()
+    target = np.array(df["target"]).tolist()
+    res_source = []
+    res_target = []
+    group = []
+    idx = 0
+    group_idx = 0
+    for s, t in tzip(source, target):
+        s = s.strip().replace("<S2SV_blank>", "")
+        t = t.strip().replace("<S2SV_blank>", "")
+        if s == "" or t == "":
+            continue
+        # 处理source
+        cwe_id = s.split()[0]
+        # 去除CWE_ID
+        s_to_do = " ".join(s.split()[1:])
+        # 去掉tag并记录tag位置
+        split_res_s = findabsstr(s_to_do, "<S2SV_StartBug>", "<S2SV_EndBug>")
+        s_to_do = s_to_do.replace("<S2SV_StartBug>", "")
+        s_to_do = s_to_do.replace("<S2SV_EndBug>", "")
+        s_removed = s_to_do
 
+        s_after_abs = s_removed
+        # 处理target
+        t_to_do = t
+        mods = modDetect(t_to_do)
+        t_source = s_removed
+        split_res_t = split_res_s
+        t_source = t_source.split()
+        mod_idx = []
+        last_ctx1 = 0
+        last_ctx2 = 0
+        # 还原修改
+        for mod in mods:
+            m_type = mod[0]
+            context1 = mod[1]
+            new = mod[2]
+            context2 = mod[3]
+            if m_type == "add":
+                if "<S2SV_null>" in context1:
+                    start_idx_ctx1 = 0
+                    context1, count = delNull(context1)
+                    start_idx_new = 3 - count
+                    tem_idx = start_idx_new
+                    tokens = new.split()
+                    for t in tokens:
+                        t_source.insert(tem_idx, t)
+                        tem_idx += 1
+                    mod_idx.append(["add", start_idx_ctx1, 3 - count, start_idx_new, len(tokens), 0, 0])
+                    split_res_t = updateSplit(split_res_t, start_idx_new, len(tokens))
+                else:
+                    start_idx_ctx1 = 0
+                    is_find = False
+                    for i in range(last_ctx1, len(t_source) - 2):
+                        if " ".join([t_source[i], t_source[i + 1], t_source[i + 2]]) == context1:
+                            start_idx_ctx1 = i
+                            last_ctx1 = i + 3
+                            is_find = True
+                            break
+                    if not is_find:
+                        mod_idx.append(["error"])
+                        continue
+                    start_idx_new = start_idx_ctx1 + 3
+                    tem_idx = start_idx_new
+                    tokens = new.split()
+                    for t in tokens:
+                        t_source.insert(tem_idx, t)
+                        tem_idx += 1
+                    mod_idx.append(["add", start_idx_ctx1, 3, start_idx_new, len(tokens), 0, 0])
+                    split_res_t = updateSplit(split_res_t, start_idx_new, len(tokens))
+            elif m_type == "delete":
+                if "<S2SV_null>" in context1:
+                    start_idx_ctx1 = 0
+                    context1, count = delNull(context1)
+                    start_idx_ctx2 = 0
+                    is_find = False
+                    for i in range(last_ctx2, len(t_source) - 2):
+                        if " ".join([t_source[i], t_source[i + 1], t_source[i + 2]]) == context2:
+                            if i > start_idx_ctx1:
+                                start_idx_ctx2 = i
+                                last_ctx2 = i + 3
+                                is_find = True
+                                break
+                    if not is_find:
+                        mod_idx.append(["error"])
+                        continue
+                    if start_idx_ctx2 <= start_idx_ctx1:
+                        mod_idx.append(["error"])
+                        continue
+                    origin_len = start_idx_ctx2 - start_idx_ctx1 - 3 + count
+                    tem_idx = start_idx_ctx1 + 3 - count
+                    for i in range(origin_len):
+                        t_source.pop(tem_idx)
+                        start_idx_ctx2 -= 1
+                    mod_idx.append(["delete", start_idx_ctx1, 3 - count, 0, 0, start_idx_ctx2, 3])
+                    split_res_t = updateSplit(split_res_t, start_idx_ctx1 + 3 - count, -origin_len)
+                elif "<S2SV_null>" in context2:
+                    start_idx_ctx1 = 0
+                    context2, count = delNull(context2)
+                    start_idx_ctx2 = len(t_source) - (3 - count)
+                    is_find = False
+                    for i in range(last_ctx1, len(t_source) - 2):
+                        if " ".join([t_source[i], t_source[i + 1], t_source[i + 2]]) == context1:
+                            if i < start_idx_ctx2:
+                                start_idx_ctx1 = i
+                                last_ctx1 = i + 3
+                                is_find = True
+                                break
+                    if not is_find:
+                        mod_idx.append(["error"])
+                        continue
+                    if start_idx_ctx2 <= start_idx_ctx1:
+                        mod_idx.append(["error"])
+                        continue
+                    origin_len = start_idx_ctx2 - start_idx_ctx1 - 3
+                    tem_idx = start_idx_ctx1 + 3
+                    for i in range(origin_len):
+                        t_source.pop(tem_idx)
+                        start_idx_ctx2 -= 1
+                    mod_idx.append(["delete", start_idx_ctx1, 3, 0, 0, start_idx_ctx2, 3 - count])
+                    split_res_t = updateSplit(split_res_t, start_idx_ctx1 + 3, -origin_len)
+                else:
+                    start_idx_ctx1 = 0
+                    start_idx_ctx2 = 0
+                    is_find = False
+                    for i in range(last_ctx2, len(t_source) - 2):
+                        if " ".join([t_source[i], t_source[i + 1], t_source[i + 2]]) == context1:
+                            start_idx_ctx1 = i
+                            last_ctx1 = i + 3
+                            is_find = True
+                            break
+                    if not is_find:
+                        mod_idx.append(["error"])
+                        continue
+                    is_find = False
+                    for i in range(last_ctx1, len(t_source) - 2):
+                        if " ".join([t_source[i], t_source[i + 1], t_source[i + 2]]) == context2:
+                            if i > start_idx_ctx1:
+                                start_idx_ctx2 = i
+                                last_ctx2 = i + 3
+                                is_find = True
+                                break
+                    if not is_find:
+                        mod_idx.append(["error"])
+                        continue
+                    if start_idx_ctx2 <= start_idx_ctx1:
+                        mod_idx.append(["error"])
+                        continue
+                    origin_len = start_idx_ctx2 - start_idx_ctx1 - 3
+                    tem_idx = start_idx_ctx1 + 3
+                    for i in range(origin_len):
+                        t_source.pop(tem_idx)
+                        start_idx_ctx2 -= 1
+                    mod_idx.append(["delete", start_idx_ctx1, 3, 0, 0, start_idx_ctx2, 3])
+                    split_res_t = updateSplit(split_res_t, start_idx_ctx1 + 3, -origin_len)
+            elif m_type == "replace":
+                if "<S2SV_null>" in context1:
+                    start_idx_ctx1 = 0
+                    context1, count = delNull(context1)
+                    start_idx_ctx2 = 0
+                    is_find = False
+                    for i in range(last_ctx2, len(t_source) - 2):
+                        if " ".join([t_source[i], t_source[i + 1], t_source[i + 2]]) == context2:
+                            if i > start_idx_ctx1:
+                                start_idx_ctx2 = i
+                                last_ctx2 = i + 3
+                                is_find = True
+                                break
+                    if not is_find:
+                        mod_idx.append(["error"])
+                        continue
+                    if start_idx_ctx2 <= start_idx_ctx1:
+                        mod_idx.append(["error"])
+                        continue
+                    origin_len = start_idx_ctx2 - start_idx_ctx1 - 3 + count
+                    tem_idx = start_idx_ctx1 + 3 - count
+                    for i in range(origin_len):
+                        t_source.pop(tem_idx)
+                        start_idx_ctx2 -= 1
+                    start_idx_new = start_idx_ctx1 + 3 - count
+                    tokens = new.split()
+                    tem_idx = start_idx_new
+                    for t in tokens:
+                        t_source.insert(tem_idx, t)
+                        tem_idx += 1
+                        start_idx_ctx2 += 1
+                    mod_idx.append(
+                        ["replace", start_idx_ctx1, 3 - count, start_idx_new, len(tokens), start_idx_ctx2, 3])
+                    split_res_t = updateSplit(split_res_t, start_idx_ctx1 + 3 - count, len(tokens) - origin_len)
+                elif "<S2SV_null>" in context2:
+                    start_idx_ctx1 = 0
+                    context2, count = delNull(context2)
+                    start_idx_ctx2 = len(t_source) - (3 - count)
+                    is_find = False
+                    for i in range(last_ctx1, len(t_source) - 2):
+                        if " ".join([t_source[i], t_source[i + 1], t_source[i + 2]]) == context1:
+                            if i < start_idx_ctx2:
+                                start_idx_ctx1 = i
+                                last_ctx1 = i + 3
+                                is_find = True
+                                break
+                    if not is_find:
+                        mod_idx.append(["error"])
+                        continue
+                    if start_idx_ctx2 <= start_idx_ctx1:
+                        mod_idx.append(["error"])
+                        continue
+                    origin_len = start_idx_ctx2 - start_idx_ctx1 - 3
+                    tem_idx = start_idx_ctx1 + 3
+                    for i in range(origin_len):
+                        t_source.pop(tem_idx)
+                        start_idx_ctx2 -= 1
+                    start_idx_new = start_idx_ctx1 + 3
+                    tokens = new.split()
+                    tem_idx = start_idx_new
+                    for t in tokens:
+                        t_source.insert(tem_idx, t)
+                        tem_idx += 1
+                        start_idx_ctx2 += 1
+                    mod_idx.append(
+                        ["replace", start_idx_ctx1, 3, start_idx_new, len(tokens), start_idx_ctx2, 3 - count])
+                    split_res_t = updateSplit(split_res_t, start_idx_ctx1 + 3, len(tokens) - origin_len)
+                else:
+                    start_idx_ctx1 = 0
+                    start_idx_ctx2 = 0
+                    is_find = False
+                    for i in range(last_ctx2, len(t_source) - 2):
+                        if " ".join([t_source[i], t_source[i + 1], t_source[i + 2]]) == context1:
+                            start_idx_ctx1 = i
+                            last_ctx1 = i + 3
+                            is_find = True
+                            break
+                    if not is_find:
+                        mod_idx.append(["error"])
+                        continue
+                    is_find = False
+                    for i in range(last_ctx1, len(t_source) - 2):
+                        if " ".join([t_source[i], t_source[i + 1], t_source[i + 2]]) == context2:
+                            if i > start_idx_ctx1:
+                                start_idx_ctx2 = i
+                                last_ctx2 = i + 3
+                                is_find = True
+                                break
+                    if not is_find:
+                        mod_idx.append(["error"])
+                        continue
+                    if start_idx_ctx2 <= start_idx_ctx1:
+                        mod_idx.append(["error"])
+                        continue
+                    origin_len = start_idx_ctx2 - 3 - start_idx_ctx1
+                    tem_idx = start_idx_ctx1 + 3
+                    for i in range(origin_len):
+                        t_source.pop(tem_idx)
+                        start_idx_ctx2 -= 1
+                    start_idx_new = start_idx_ctx1 + 3
+                    tokens = new.split()
+                    tem_idx = start_idx_new
+                    for t in tokens:
+                        t_source.insert(tem_idx, t)
+                        tem_idx += 1
+                        start_idx_ctx2 += 1
+                    mod_idx.append(["replace", start_idx_ctx1, 3, start_idx_new, len(tokens), start_idx_ctx2, 3])
+                    split_res_t = updateSplit(split_res_t, start_idx_ctx1 + 3, len(tokens) - origin_len)
+        t_after_abs = " ".join(t_source)
+        s_after_abs = s_after_abs.replace("<S2SV_blank>", "")
+        res_source.append(s_after_abs)
+        t_after_abs = t_after_abs.replace("<S2SV_blank>", "")
+        res_target.append(t_after_abs)
+        group.append(group_idx)
+        idx += 1
+        group_idx += 1
+    assert len(res_source) == len(res_target)
+    res_source_filtered = []
+    res_target_filtered = []
+    group_filtered = []
+    for s, t, g in zip(res_source, res_target, group):
+        if not g == -1:
+            if s == "":
+                s = "\n"
+            if t == "":
+                t = "\n"
+            res_source_filtered.append(s)
+            res_target_filtered.append(t)
+            group_filtered.append(g)
+    df = pd.DataFrame()
+    df["source"] = res_source_filtered
+    df["target"] = res_target_filtered
+    df["group"] = group_filtered
+    df.to_csv("cve_fixes_{}_gpt_absreplace.csv".format(type), encoding='utf-8')
 def is_utf8(s):
     try:
         s.encode('utf-8').decode('utf-8')
@@ -1657,7 +1947,7 @@ def is_utf8(s):
     except UnicodeDecodeError:
         return False
 
-def toTxt(path):
+def toTxt(path,name=None):
     type = path.split("_")[2]
     if type == "val":
         type = "valid"
@@ -1665,8 +1955,8 @@ def toTxt(path):
     buggy = df["source"]
     fixed = df["target"]
     print(len(buggy))
-    f1 = open("./gptdata/buggy_methods_{}.txt".format(type), 'a', encoding='utf-8')
-    f2 = open("./gptdata/fixed_methods_{}.txt".format(type), 'a', encoding='utf-8')
+    f1 = open("./gptdata/buggy_methods_{}_{}.txt".format(type,name), 'a', encoding='utf-8')
+    f2 = open("./gptdata/fixed_methods_{}_{}.txt".format(type,name), 'a', encoding='utf-8')
     count = 0
     for b, f in zip(buggy, fixed):
         if is_utf8(b) and is_utf8(f):
@@ -1709,12 +1999,15 @@ if __name__ == "__main__":
     # complete("train")
     # complete("val")
     # complete("test")
-    toTxt("cve_fixes_train_gpt.csv")
-    toTxt("cve_fixes_val_gpt.csv")
-    toTxt("cve_fixes_test_gpt.csv")
-    # f = open("gptdata/fixed_methods_train.txt",'r',encoding = 'utf-8')
-    # for i in range(10000):
-    #     try:
-    #         line = f.readline()
-    #     except UnicodeDecodeError:
-    #         print(i)
+    # toTxt("cve_fixes_train_gpt.csv")
+    # toTxt("cve_fixes_val_gpt.csv")
+    # toTxt("cve_fixes_test_gpt.csv")
+    # toTxt("cve_fixes_train_no_ctx.csv","no_ctx")
+    # toTxt("cve_fixes_val_no_ctx.csv","no_ctx")
+    # toTxt("cve_fixes_test_no_ctx.csv","no_ctx")
+    completeabs("train")
+    completeabs("val")
+    completeabs("test")
+    toTxt("cve_fixes_train_gpt_absreplace.csv","absreplace")
+    toTxt("cve_fixes_val_gpt_absreplace.csv","absreplace")
+    toTxt("cve_fixes_test_gpt_absreplace.csv","absreplace")
