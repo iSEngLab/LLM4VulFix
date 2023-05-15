@@ -225,6 +225,9 @@ def test(args, model, tokenizer, device, epoch=0):
                 if 0 in t:
                     t=t[:t.index(0)]
                 text = tokenizer.decode(t,clean_up_tokenization_spaces=False)
+                oriinput = tokenizer.decode(list(inputs[0].cpu().numpy()),clean_up_tokenization_spaces=False)
+                if text.startswith(oriinput):
+                    text = text[len(oriinput):]
                 p.append(text)
     model.train()
     predictions=[]
@@ -232,8 +235,6 @@ def test(args, model, tokenizer, device, epoch=0):
     with open(os.path.join(args.output_dir,"test_{}.output".format(str(epoch))),'w') as f, \
         open(os.path.join(args.output_dir,"test_{}.gold".format(str(epoch))),'w') as f1:
         for ref,gold in zip(p,eval_examples):
-            ref = clean_tokens(ref)
-            gold.target = clean_tokens(gold.target)
             predictions.append(str(gold.idx)+'\t'+ref)
             f.write(str(gold.idx)+'\t'+ref+'\n')
             f1.write(str(gold.idx)+'\t'+gold.target+'\n')   
@@ -253,13 +254,6 @@ def update_config(model, tokenizer):
     model.config.eos_token_id = tokenizer.eos_token_id
     model.config.pad_token_id = tokenizer.pad_token_id
 
-def clean_tokens(tokens):
-    tokens = tokens.replace("<pad>", "")
-    tokens = tokens.replace("<s>", "")
-    tokens = tokens.replace("</s>", "")
-    tokens = tokens.strip("\n")
-    tokens = tokens.strip()
-    return tokens
 
 def main():
     parser = argparse.ArgumentParser()

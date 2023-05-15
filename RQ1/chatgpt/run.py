@@ -12,12 +12,12 @@ import pandas as pd
 import tqdm
 from tqdm.contrib import tzip
 
-openai.api_key = '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'
+openai.api_key = ''
 base_prompt = '''There are several vulnerabilities in the following program. Please try to fix these vulnerabilities, and return the complete code in the form of a markdown code block\n\n'''
 tag_prompt = '''There are several vulnerabilities in the following program. In this program, <S2SV_ModStart> represents where the vulnerability starts, and <S2SV_ModEnd> represents the place where the vulnerability ends. Please try to fix these vulnerabilities, and return the complete code without the above two special tags to me in the form of a markdown code block\n\n'''
 multi_base_prompt = '''There are several vulnerabilities in the following program. Please try to fix these vulnerabilities, and return the complete code in the form of a markdown code block. Give me 5 possible fixed code\n\n'''
 multi_tag_prompt = '''There are several vulnerabilities in the following program. In this program, <S2SV_ModStart> represents where the vulnerability starts, and <S2SV_ModEnd> represents the place where the vulnerability ends. Please try to fix these vulnerabilities, and return the complete code without the above two special tags to me in the form of a markdown code block. Give me 5 possible fixed code\n\n'''
-
+new_multi_tag_prompt = '''You are an automated vulnerability repair tool. The following program contains some vulnerable lines (identified by <S2SV_StartBug> and <S2SV_EndBug> tags). Please provide ten possible correct code.\n'''
 def getdata(bug_path, fix_path):
     f1 = open(bug_path, 'r', encoding='utf-8')
     f2 = open(fix_path, 'r', encoding='utf-8')
@@ -126,5 +126,5 @@ if __name__ == '__main__':
     #     run("cve_fixes_chat.csv", prompt=base_prompt, length=20, epoch=i, name="base")
     # for i in range(5):
     #     run("cve_fixes_chat_tag.csv", prompt=tag_prompt, length=20, epoch=i, name="tag")
-    run("cve_fixes_chat.csv", prompt=multi_base_prompt, length=20, name="base")
-    run("cve_fixes_chat_tag.csv", prompt=multi_tag_prompt, length=20, name="tag")
+    # run("cve_fixes_chat.csv", prompt=multi_base_prompt, length=20, name="base")
+    run("cve_fixes_chat_tag.csv", prompt=new_multi_tag_prompt, length=100, name="newtag")

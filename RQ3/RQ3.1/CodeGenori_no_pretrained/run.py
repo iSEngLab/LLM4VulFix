@@ -226,6 +226,9 @@ def test(args, model, tokenizer, device, epoch=0):
                 if 0 in t:
                     t=t[:t.index(0)]
                 text = tokenizer.decode(t,clean_up_tokenization_spaces=False)
+                oriinput = tokenizer.decode(list(inputs[0].cpu().numpy()),clean_up_tokenization_spaces=False)
+                if text.startswith(oriinput):
+                    text = text[len(oriinput):]
                 p.append(text)
     model.train()
     predictions=[]
@@ -350,6 +353,7 @@ def main():
 
     tokenizer = AutoTokenizer.from_pretrained("Salesforce/codegen-350M-multi", do_lower_case=args.do_lower_case, \
         bos_token='<s>', eos_token='</s>', pad_token='<pad>', unk_token='<|UNKNOWN|>', sep_token='concode_elem_sep')
+    tokenizer.add_tokens(["<S2SV_StartBug>", "<S2SV_EndBug>", "<S2SV_blank>", "<S2SV_ModStart>", "<S2SV_ModEnd>"])
     config = CodeGenConfig.from_pretrained("Salesforce/codegen-350M-multi")
     #budild model
     decoder = CodeGenForCausalLM(config)

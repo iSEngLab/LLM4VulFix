@@ -225,6 +225,9 @@ def test(args, model, tokenizer, device, epoch=0):
                 if 0 in t:
                     t=t[:t.index(0)]
                 text = tokenizer.decode(t,clean_up_tokenization_spaces=False)
+                oriinput = tokenizer.decode(list(inputs[0].cpu().numpy()),clean_up_tokenization_spaces=False)
+                if text.startswith(oriinput):
+                    text = text[len(oriinput):]
                 p.append(text)
     model.train()
     predictions=[]
