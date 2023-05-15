@@ -8,9 +8,9 @@ python run.py \
         --do_eval \
         --model_type gpt2 \
         --model_name_or_path microsoft/CodeGPT-small-java-adaptedGPT2 \
-        --train_filename ../data/fine_tune_data/gptdata/buggy_methods_train.txt,../data/fine_tune_data/gptdata/fixed_methods_train.txt \
-        --dev_filename ../data/fine_tune_data/gptdata/buggy_methods_valid.txt,../data/fine_tune_data/gptdata/fixed_methods_valid.txt \
-        --test_filename ../data/fine_tune_data/gptdata/buggy_methods_test.txt,../data/fine_tune_data/gptdata/fixed_methods_test.txt \
+        --train_filename ../data/fine_tune_data/gptdata/buggy_methods_train_ori.txt,../data/fine_tune_data/gptdata/fixed_methods_train_ori.txt \
+        --dev_filename ../data/fine_tune_data/gptdata/buggy_methods_val_ori.txt,../data/fine_tune_data/gptdata/fixed_methods_val_ori.txt \
+        --test_filename ../data/fine_tune_data/gptdata/buggy_methods_test_ori.txt,../data/fine_tune_data/gptdata/fixed_methods_test_ori.txt \
         --output_dir ./24-Jan-2023/ \
         --max_source_length 512 \
         --max_target_length 512 \
@@ -28,7 +28,7 @@ python run.py \
          --model_type gpt2 \
          --load_model_path ./24-Jan-2023/checkpoint-last/pytorch_model.bin \
          --model_name_or_path microsoft/CodeGPT-small-java-adaptedGPT2 \
-         --test_filename ../data/fine_tune_data/gptdata/buggy_methods_test.txt,../data/fine_tune_data/gptdata/fixed_methods_test.txt \
+         --test_filename ../data/fine_tune_data/gptdata/buggy_methods_test_ori.txt,../data/fine_tune_data/gptdata/fixed_methods_test_ori.txt \
          --output_dir ./24-Jan-2023/ \
          --max_source_length 512 \
          --max_target_length 512 \

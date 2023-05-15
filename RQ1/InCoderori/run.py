@@ -357,7 +357,7 @@ def main():
     set_seed(args.seed)
     tokenizer = AutoTokenizer.from_pretrained("facebook/incoder-1B", do_lower_case=args.do_lower_case, \
         bos_token='<s>', eos_token='</s>', pad_token='<pad>', unk_token='<|UNKNOWN|>', sep_token='concode_elem_sep')
-    
+    tokenizer.add_tokens(["<S2SV_StartBug>", "<S2SV_EndBug>", "<S2SV_blank>", "<S2SV_ModStart>", "<S2SV_ModEnd>"])
     #budild model
     decoder = AutoModelForCausalLM.from_pretrained("facebook/incoder-1B")
     decoder.resize_token_embeddings(len(tokenizer))    

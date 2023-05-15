@@ -40,7 +40,7 @@ from torch.utils.data.distributed import DistributedSampler
 from transformers import (WEIGHTS_NAME, AdamW, get_linear_schedule_with_warmup,
                           RobertaConfig, RobertaModel, RobertaTokenizer,
                           GPT2Config, GPT2LMHeadModel, GPT2Tokenizer, AutoModelForCausalLM, AutoTokenizer,
-                          CodeGenConfig)
+                          CodeGenConfig, CodeGenForCausalLM)
 MODEL_CLASSES = {
     'roberta': (RobertaConfig, RobertaModel, RobertaTokenizer),
     'gpt2': (GPT2Config, GPT2LMHeadModel, GPT2Tokenizer),
@@ -352,7 +352,7 @@ def main():
         bos_token='<s>', eos_token='</s>', pad_token='<pad>', unk_token='<|UNKNOWN|>', sep_token='concode_elem_sep')
     config = CodeGenConfig.from_pretrained("Salesforce/codegen-350M-multi")
     #budild model
-    decoder = AutoModelForCausalLM(config)
+    decoder = CodeGenForCausalLM(config)
     decoder.resize_token_embeddings(len(tokenizer))    
     update_config(decoder, tokenizer)
     model=Seq2Seq(decoder=decoder,config=decoder.config,

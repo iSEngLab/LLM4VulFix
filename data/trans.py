@@ -1364,10 +1364,12 @@ def complete(type):
     target = np.array(df["target"]).tolist()
     res_source = []
     res_target = []
+    res_source_tag = []
     group = []
     idx = 0
     group_idx = 0
     for s, t in tzip(source, target):
+        original_s = s
         s = s.strip().replace("<S2SV_blank>", "")
         t = t.strip().replace("<S2SV_blank>", "")
         if s == "" or t == "":
@@ -1628,6 +1630,7 @@ def complete(type):
         res_source.append(s_after_abs)
         t_after_abs = t_after_abs.replace("<S2SV_blank>", "")
         res_target.append(t_after_abs)
+        res_source_tag.append(original_s)
         group.append(group_idx)
         idx += 1
         group_idx += 1
@@ -1635,7 +1638,8 @@ def complete(type):
     res_source_filtered = []
     res_target_filtered = []
     group_filtered = []
-    for s, t, g in zip(res_source, res_target, group):
+    res_source_tag_filtered = []
+    for s, t, g,st in zip(res_source, res_target, group,res_source_tag):
         if not g == -1:
             if s == "":
                 s = "\n"
@@ -1644,10 +1648,12 @@ def complete(type):
             res_source_filtered.append(s)
             res_target_filtered.append(t)
             group_filtered.append(g)
+            res_source_tag_filtered.append(st)
     df = pd.DataFrame()
     df["source"] = res_source_filtered
     df["target"] = res_target_filtered
     df["group"] = group_filtered
+    df['orisource'] = res_source_tag_filtered
     df.to_csv("cve_fixes_{}_gpt.csv".format(type), encoding='utf-8')
 def completeabs(type):
     df = pd.read_csv("cve_fixes_{}_absreplace.csv".format(type), encoding='utf-8')
@@ -2005,9 +2011,12 @@ if __name__ == "__main__":
     # toTxt("cve_fixes_train_no_ctx.csv","no_ctx")
     # toTxt("cve_fixes_val_no_ctx.csv","no_ctx")
     # toTxt("cve_fixes_test_no_ctx.csv","no_ctx")
-    completeabs("train")
-    completeabs("val")
-    completeabs("test")
-    toTxt("cve_fixes_train_gpt_absreplace.csv","absreplace")
-    toTxt("cve_fixes_val_gpt_absreplace.csv","absreplace")
-    toTxt("cve_fixes_test_gpt_absreplace.csv","absreplace")
+    # completeabs("train")
+    # completeabs("val")
+    # completeabs("test")
+    # toTxt("cve_fixes_train_gpt_absreplace.csv","absreplace")
+    # toTxt("cve_fixes_val_gpt_absreplace.csv","absreplace")
+    # toTxt("cve_fixes_test_gpt_absreplace.csv","absreplace")
+    toTxt("cve_fixes_train.csv",name="ori")
+    toTxt("cve_fixes_val.csv",name='ori')
+    toTxt("cve_fixes_test.csv",name='ori')
