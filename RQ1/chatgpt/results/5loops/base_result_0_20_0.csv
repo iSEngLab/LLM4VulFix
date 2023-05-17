@@ -1,0 +1,232 @@
+,inputs,outputs,targets,acuuracy
+0,"void * H264SwDecMalloc ( u32 size )  {  return malloc ( size ) ;  }
+","#include <stdlib.h>
+
+void* H264SwDecMalloc (u32 size) {
+    if (size == 0) return NULL;
+    return malloc(size);
+}
+","void * H264SwDecMalloc ( u32 size , u32 num ) { if ( size > UINT32_MAX / num ) { return NULL ; } return malloc ( size * num ) ; }
+",0
+1,"tdata_t _TIFFmalloc ( tsize_t s )  {  return ( malloc ( ( size_t ) s ) ) ; }
+","#include <stdlib.h>
+
+tdata_t _TIFFmalloc(tsize_t s) {
+    return malloc(s);
+}
+","tdata_t _TIFFmalloc ( tsize_t s ) { if ( s == 0 ) return ( ( void * ) NULL ) ; return ( malloc ( ( size_t ) s ) ) ; }
+",0
+2,"static void skcipher_release ( void * private ) {  crypto_free_skcipher ( private ) ;  }
+","#include <linux/crypto.h>
+
+static void skcipher_release (struct crypto_skcipher *tfm) {
+    crypto_free_skcipher(tfm);
+}
+","static void skcipher_release ( void * private ) { struct skcipher_tfm * tfm = private ; crypto_free_skcipher ( tfm -> skcipher ) ; kfree ( tfm ) ; }
+",0
+3,"void _modinit ( module_t * m ) { service_named_bind_command ( ""chanserv"" , & cs_flags ) ;  }
+","void _modinit(module_t* m) {
+    if (!m) {
+        return;
+    }
+    service_named_bind_command(""chanserv"", &cs_flags);
+}
+","void _modinit ( module_t * m ) { service_named_bind_command ( ""chanserv"" , & cs_flags ) ; add_bool_conf_item ( ""ANOPE_FLAGS_COMPAT"" , & chansvs . me -> conf_table , 0 , & anope_flags_compat , true ) ; hook_add_event ( ""nick_can_register"" ) ; hook_add_nick_can_register ( check_registration_keywords ) ; hook_add_event ( ""user_can_register"" ) ; hook_add_user_can_register ( check_registration_keywords ) ; }
+",0
+4,"static char * print_string ( cJSON * item )  {  return print_string_ptr ( item -> valuestring ) ;  }
+","static char* print_string(cJSON* item) {
+    if(item == NULL || item->valuestring == NULL) { //check if the item or value string is null
+        return NULL;
+    }
+    return print_string_ptr(item->valuestring); //return the string pointer
+}
+","static char * print_string ( cJSON * item , printbuffer * p ) { return print_string_ptr ( item -> valuestring , p ) ; }
+",0
+5,"int file_is_y4m ( const char detect [ 4 ] ) {  if ( memcmp ( detect , ""YUV4"" , 4 ) == 0 ) { return 1 ; } return 0 ; }
+","#include <string.h>
+
+int file_is_y4m(const char* detect) {
+  if (memcmp(detect, ""YUV4"", 4) == 0) {
+    return 1;
+  }
+  return 0;
+}
+","static int file_is_y4m ( const char detect [ 4 ] ) { if ( memcmp ( detect , ""YUV4"" , 4 ) == 0 ) { return 1 ; } return 0 ; }
+",0
+6,"static void ast_dealloc ( AST_object * self )  {  Py_CLEAR ( self -> dict ) ; Py_TYPE ( self ) -> tp_free ( self ) ; }
+","static void ast_dealloc(AST_object* self) {
+    Py_CLEAR(self->dict);
+    PyObject_Free(self); //Replace Py_TYPE(self)->tp_free(self) with PyObject_Free(self) to fix the vulnerability.
+}
+","static void ast_dealloc ( AST_object * self ) { PyObject_GC_UnTrack ( self ) ; Py_CLEAR ( self -> dict ) ; Py_TYPE ( self ) -> tp_free ( self ) ; }
+",0
+7,"static void mark_commit ( struct commit * c , void * data ) {  mark_object ( & c -> object , NULL , NULL , data ) ;  }
+","static void mark_commit (struct commit *c, void *data) {
+    if (!c)
+        return;
+    mark_object(&c->object, NULL, NULL, data);
+}
+","static void mark_commit ( struct commit * c , void * data ) { mark_object ( & c -> object , NULL , data ) ; }
+",0
+8,"void generic_pipe_buf_get ( struct pipe_inode_info * pipe , struct pipe_buffer * buf )  {  get_page ( buf -> page ) ;  }
+","void generic_pipe_buf_get(struct pipe_inode_info *pipe, struct pipe_buffer *buf) {
+    if (pipe && buf) { //check if pipe and buf are not NULL
+        struct page *pg = buf->page;
+        if (pg) { //check if page is not NULL
+            get_page(pg);
+        }
+    }
+}
+","bool generic_pipe_buf_get ( struct pipe_inode_info * pipe , struct pipe_buffer * buf ) { return try_get_page ( buf -> page ) ; }
+",0
+9,"static int sock_close ( struct inode * inode , struct file * filp ) {  sock_release ( SOCKET_I ( inode ) ) ;  return 0 ; }
+","static int sock_close(struct inode *inode, struct file *filp) {
+    struct socket *sock;
+    sock = SOCKET_I(inode);
+    if (!sock) {
+        return -EINVAL;
+    }
+    sock_release(sock);
+    return 0;
+}
+","static int sock_close ( struct inode * inode , struct file * filp ) { __sock_release ( SOCKET_I ( inode ) , inode ) ; return 0 ; }
+",0
+10,"static int sock_close ( struct inode * inode , struct file * filp ) {  sock_release ( SOCKET_I ( inode ) ) ;  return 0 ; }
+","#include <linux/socket.h>
+
+static int sock_close(struct inode *inode, struct file *filp) {
+    if (SOCKET_I(inode))
+        sock_release(SOCKET_I(inode));
+    return 0;
+}
+","static int sock_close ( struct inode * inode , struct file * filp ) { __sock_release ( SOCKET_I ( inode ) , inode ) ; return 0 ; }
+",0
+11,"int pure_strcmp ( const char * const s1 , const char * const s2 ) {  return pure_memcmp ( s1 , s2 , strlen ( s1 ) + 1U ) ;  }
+","#include <string.h>
+
+int pure_strcmp ( const char * const s1 , const char * const s2 ) {
+    size_t s1_len = strlen(s1);
+    size_t s2_len = strlen(s2);
+    size_t max_len = (s1_len > s2_len) ? s1_len : s2_len;
+    return pure_memcmp(s1, s2, max_len + 1U);
+}
+","int pure_strcmp ( const char * const s1 , const char * const s2 ) { const size_t s1_len = strlen ( s1 ) ; const size_t s2_len = strlen ( s2 ) ; const size_t len = ( s1_len < s2_len ) ? s1_len : s2_len ; return pure_memcmp ( s1 , s2 , len + 1 ) ; }
+",0
+12,"static char * pool_strdup ( const char * s ) {  char * r = pool_alloc ( strlen ( s ) + 1 ) ;   strcpy ( r , s ) ;  return r ; }
+","#include <stdlib.h>
+#include <string.h>
+
+static char * pool_strdup(const char *s) {
+    if (s == NULL) { // check for null input
+        return NULL;
+    }
+
+    size_t len = strlen(s);
+    char *r = malloc((len + 1) * sizeof(char)); // safer memory allocation
+    if (r == NULL) { // check if allocation was successful
+        return NULL;
+    }
+
+    strcpy(r, s);
+    return r;
+}
+","static char * pool_strdup ( const char * s ) { size_t len = strlen ( s ) + 1 ; char * r = pool_alloc ( len ) ; memcpy ( r , s , len ) ; return r ; }
+",0
+13,"static void * skcipher_bind ( const char * name , u32 type , u32 mask ) {  return crypto_alloc_skcipher ( name , type , mask ) ;   }
+","#include<linux/crypto.h>
+
+static struct crypto_skcipher *skcipher_bind(const char *name, u32 type, u32 mask)
+{
+    struct crypto_skcipher *tfm = crypto_alloc_skcipher(name, type, mask);
+    return IS_ERR(tfm) ? NULL : tfm;
+}
+","static void * skcipher_bind ( const char * name , u32 type , u32 mask ) { struct skcipher_tfm * tfm ; struct crypto_skcipher * skcipher ; tfm = kzalloc ( sizeof ( * tfm ) , GFP_KERNEL ) ; if ( ! tfm ) return ERR_PTR ( - ENOMEM ) ; skcipher = crypto_alloc_skcipher ( name , type , mask ) ; if ( IS_ERR ( skcipher ) ) { kfree ( tfm ) ; return ERR_CAST ( skcipher ) ; } tfm -> skcipher = skcipher ; return tfm ; }
+",0
+14,"void vp9_frame_init_quantizer ( VP9_COMP * cpi ) {  cpi -> zbin_mode_boost = 0 ;   vp9_init_plane_quantizers ( cpi , & cpi -> mb ) ;  }
+","void vp9_frame_init_quantizer(VP9_COMP* cpi) {
+    cpi->zbin_mode_boost = 0;
+    vp9_init_plane_quantizers(cpi, &cpi->common.seg);
+}
+","void vp9_frame_init_quantizer ( VP9_COMP * cpi ) { vp9_init_plane_quantizers ( cpi , & cpi -> td . mb ) ; }
+",0
+15,"void usage_exit ( ) {  fprintf ( stderr , ""Usage:%s<codec><width><height><infile><outfile>\\n"" , exec_name ) ; exit ( EXIT_FAILURE ) ; }
+","void usage_exit(char* exec_name) {
+    fprintf(stderr, ""Usage: %s <codec> <width> <height> <infile> <outfile>\n"", exec_name);
+    exit(EXIT_FAILURE);
+}
+","void usage_exit ( void ) { fprintf ( stderr , ""Usage:%s<codec><width><height><infile><outfile>\\n"" , exec_name ) ; exit ( EXIT_FAILURE ) ; }
+",0
+16,"static inline int mount_entry_on_systemfs ( struct mntent * mntent ) {  return mount_entry_on_generic ( mntent , mntent -> mnt_dir ) ;  }
+","#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <mntent.h>
+#include <sys/mount.h>
+
+static inline int mount_entry_on_systemfs(struct mntent *mntent) {
+    if (strncmp(mntent->mnt_fsname, ""/"", 1) == 0) {
+        // Check if the mount point is not already mounted
+        FILE *fp = setmntent(""/etc/mtab"", ""r"");
+        struct mntent *e;
+        while ((e = getmntent(fp)) != NULL) {
+            if (strcmp(e->mnt_dir, mntent->mnt_dir) == 0) {
+                fprintf(stderr, ""Error: %s is already mounted!\n"", mntent->mnt_dir);
+                endmntent(fp);
+                return -1;
+            }
+        }
+        endmntent(fp);
+
+        // Mount the entry
+        int res = mount(mntent->mnt_fsname, mntent->mnt_dir, NULL, MS_NOATIME | MS_NODEV | MS_NOSUID | MS_RDONLY, NULL);
+        if (res != 0) {
+            fprintf(stderr, ""Error: Failed to mount %s on %s\n"", mntent->mnt_fsname, mntent->mnt_dir);
+            return -1;
+        }
+    } else {
+        fprintf(stderr, ""Error: %s is not a valid filesystem to mount!\n"", mntent->mnt_fsname);
+        return -1;
+    }
+    return 0;
+}
+","static inline int mount_entry_on_systemfs ( struct mntent * mntent ) { return mount_entry_on_generic ( mntent , mntent -> mnt_dir , NULL ) ; }
+",0
+17,"static inline int mount_entry_on_systemfs ( struct mntent * mntent ) {  return mount_entry_on_generic ( mntent , mntent -> mnt_dir ) ;  }
+","#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <mntent.h>
+#include <sys/mount.h>
+
+static inline int mount_entry_on_systemfs(struct mntent *mntent) {
+  int ret = 0;
+  if (!mntent || !mntent->mnt_dir)
+    return -1;
+  
+  ret = mount_entry_on_generic(mntent, mntent->mnt_dir);
+  if (ret < 0)
+    perror(""Failed to mount the entry"");
+    
+  return ret;
+}
+","static inline int mount_entry_on_systemfs ( struct mntent * mntent ) { return mount_entry_on_generic ( mntent , mntent -> mnt_dir , NULL ) ; }
+",0
+18,"static vpx_codec_err_t encoder_init ( vpx_codec_ctx_t * ctx , vpx_codec_priv_enc_mr_cfg_t * data ) {  return encoder_common_init ( ctx ) ;  }
+","static vpx_codec_err_t encoder_init(vpx_codec_ctx_t * ctx, vpx_codec_priv_enc_mr_cfg_t * data) {
+    if (!ctx || !data) {
+        return VPX_CODEC_INVALID_PARAM;
+    }
+    return encoder_common_init(ctx);
+}
+","static vpx_codec_err_t encoder_init ( vpx_codec_ctx_t * ctx , vpx_codec_priv_enc_mr_cfg_t * data ) { vpx_codec_err_t res = VPX_CODEC_OK ; ( void ) data ; if ( ctx -> priv == NULL ) { vpx_codec_alg_priv_t * const priv = vpx_calloc ( 1 , sizeof ( * priv ) ) ; if ( priv == NULL ) return VPX_CODEC_MEM_ERROR ; ctx -> priv = ( vpx_codec_priv_t * ) priv ; ctx -> priv -> init_flags = ctx -> init_flags ; ctx -> priv -> enc . total_encoders = 1 ; priv -> buffer_pool = ( BufferPool * ) vpx_calloc ( 1 , sizeof ( BufferPool ) ) ; if ( priv -> buffer_pool == NULL ) return VPX_CODEC_MEM_ERROR ; # if CONFIG_MULTITHREAD if ( pthread_mutex_init ( & priv -> buffer_pool -> pool_mutex , NULL ) ) { return VPX_CODEC_MEM_ERROR ; } # endif if ( ctx -> config . enc ) { priv -> cfg = * ctx -> config . enc ; ctx -> config . enc = & priv -> cfg ; } priv -> extra_cfg = default_extra_cfg ; once ( vp9_initialize_enc ) ; res = validate_config ( priv , & priv -> cfg , & priv -> extra_cfg ) ; if ( res == VPX_CODEC_OK ) { set_encoder_config ( & priv -> oxcf , & priv -> cfg , & priv -> extra_cfg ) ; # if CONFIG_VP9_HIGHBITDEPTH priv -> oxcf . use_highbitdepth = ( ctx -> init_flags & VPX_CODEC_USE_HIGHBITDEPTH ) ? 1 : 0 ; # endif priv -> cpi = vp9_create_compressor ( & priv -> oxcf , priv -> buffer_pool ) ; if ( priv -> cpi == NULL ) res = VPX_CODEC_MEM_ERROR ; else priv -> cpi -> output_pkt_list = & priv -> pkt_list . head ; } } return res ; }
+",0
+19,"void test_checkout_nasty__git_tilde1 ( void ) {  # ifdef GIT_WIN32  test_checkout_fails ( ""refs/heads/git_tilde1"" , "".git/foobar"" ) ;  # endif  }
+","void test_checkout_nasty__git_tilde1(void) {
+    #ifdef GIT_WIN32
+        char *branch_name = ""refs/heads/git_tilde1"";
+        char *dir_name = "".git/foobar"";
+        test_checkout_fails(branch_name, dir_name);
+    #endif
+}
+","void test_checkout_nasty__git_tilde1 ( void ) { test_checkout_fails ( ""refs/heads/git_tilde1"" , "".git/foobar"" ) ; test_checkout_fails ( ""refs/heads/git_tilde1"" , ""git~1/foobar"" ) ; }
+",0

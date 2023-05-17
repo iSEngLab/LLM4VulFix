@@ -1,0 +1,200 @@
+#include <stdlib.h>
+
+void* H264SwDecMalloc(size_t size) {
+    if (size == 0) {
+        return NULL;
+    }
+    
+    void* ptr = malloc(size);
+    
+    return ptr;
+}
+
+--------------------
+#include <stdlib.h>
+
+tdata_t _TIFFmalloc(tsize_t s) {
+    return (tdata_t) malloc((size_t) s);
+}
+
+--------------------
+
+--------------------
+void _modinit(module_t *m) {
+    service_named_bind_command("chanserv", &cs_flags);
+}
+
+--------------------
+static char* print_string(cJSON* item){
+    if(item == NULL || !cJSON_IsString(item)){
+        return NULL; //check if input is valid
+    }
+    return cJSON_PrintUnformatted(item);
+}
+
+--------------------
+#include <string.h>
+
+int file_is_y4m(const char* detect) 
+{  
+    if (memcmp(detect, "YUV4", 4) == 0) 
+    { 
+        return 1; 
+    } 
+    else 
+    {
+        return 0; 
+    }
+}
+
+--------------------
+static void ast_dealloc(AST_object* self) {
+    if (self) {
+        if (self->dict) {
+            Py_DECREF(self->dict);
+        }
+        Py_TYPE(self)->tp_free(self);
+    }
+}
+
+--------------------
+
+--------------------
+void generic_pipe_buf_get(struct pipe_inode_info *pipe, struct pipe_buffer *buf) {
+    if (pipe && buf && buf->page) {
+        if (get_user_pages(buf->page, 1, FOLL_WRITE, NULL)) {
+            put_page(buf->page);
+        }
+    }
+}
+
+--------------------
+#include <linux/socket.h>
+
+static int sock_close(struct inode *inode, struct file *filp) {
+    struct socket *sock;
+
+    sock = SOCKET_I(inode);
+    if (!sock) {
+        return -EBADF;
+    }
+
+    sock_release(sock);
+    return 0;
+}
+
+--------------------
+#include <linux/socket.h>
+
+static int sock_close(struct inode *inode, struct file *filp) {  
+    struct socket *sock = SOCKET_I(inode);
+    if (sock) {
+        sock_release(sock);
+    }
+    return 0;
+}
+
+--------------------
+#include <string.h>
+
+int pure_strcmp ( const char * const s1 , const char * const s2 ) {
+    if (s1 == NULL || s2 == NULL) {  // Vulnerability: Null pointer dereference
+        return -1;
+    }
+    return pure_memcmp ( s1 , s2 , strlen ( s1 ) + 1U ) ;
+}
+
+--------------------
+static char * pool_strdup ( const char * s ) {
+    if (s == NULL) {  // check if string is NULL
+        return NULL;
+    }
+    size_t len = strlen(s);
+    char * r = pool_alloc( len + 1 );
+    if (r == NULL) {  // check if pool_alloc() failed to allocate memory
+        return NULL;
+    }
+    strcpy( r , s );
+    return r;
+}
+
+--------------------
+#include <linux/crypto.h>
+
+static struct crypto_skcipher *skcipher_bind(const char *name, u32 type, u32 mask)
+{
+    return crypto_alloc_skcipher(name, type, mask);
+}
+
+--------------------
+void vp9_frame_init_quantizer(VP9_COMP* cpi){
+    if(cpi != NULL){
+        cpi->zbin_mode_boost = 0;
+        vp9_init_plane_quantizers(cpi, &(cpi->common), &(cpi->mb));
+    }
+}
+
+--------------------
+void usage_exit(char *exec_name) {
+    fprintf(stderr, "Usage: %s <codec> <width> <height> <infile> <outfile>\n", exec_name);
+    exit(EXIT_FAILURE);
+}
+
+--------------------
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <mntent.h>
+
+static inline int mount_entry_on_systemfs(struct mntent* mntent) {
+    int ret = mount_entry_on_generic(mntent, mntent->mnt_dir); // Call the mount_entry_on_generic function and store the return value in the ret variable
+    if (ret == -1) { // Check if the mount failed
+        perror("Unable to mount device"); // Print the error message
+        exit(errno); // Exit the program with the error code
+    }
+    return ret; // Return the return value of the mount_entry_on_generic function
+}
+
+--------------------
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/mount.h>
+#include <mntent.h>
+
+static int mount_entry_on_systemfs(struct mntent *mntent) {
+    int ret = -1;
+    if (mntent == NULL || mntent->mnt_dir == NULL) {
+        return ret;
+    }
+    if (mount_entry_on_generic(mntent, mntent->mnt_dir) == 0) {
+        ret = 0;
+    }
+    return ret;
+}
+
+--------------------
+static vpx_codec_err_t encoder_init(vpx_codec_ctx_t *ctx, vpx_codec_priv_enc_mr_cfg_t *data) {
+  if (ctx != NULL && data != NULL) {
+    return encoder_common_init(ctx);
+  } else {
+    return VPX_CODEC_INVALID_PARAM;
+  }
+}
+
+--------------------
+void test_checkout_nasty__git_tilde1(void) {
+#ifdef GIT_WIN32
+  // avoid buffer overflow by specifying max length for file path
+  char filepath[MAX_PATH] = {0};
+  // use secure version of function to concatenate strings
+  strcat_s(filepath, MAX_PATH, ".git/foobar");
+  // check for NULL return value from method and handle error
+   if(test_checkout_fails("refs/heads/git_tilde1", filepath) != 0) {
+     printf("Error: checkout failed\n");
+   }
+#endif
+}
+
+--------------------

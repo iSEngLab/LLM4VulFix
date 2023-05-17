@@ -1,0 +1,202 @@
+#include <stdlib.h> // for malloc and size_t
+
+void *H264SwDecMalloc(size_t size) {
+    if(size == 0) { // check for 0 or negative size allocation
+        return NULL; 
+    }
+    void *ptr = malloc(size);
+    if(ptr == NULL) { // check for memory allocation failure
+        return NULL;
+    }
+    return ptr;
+}
+
+--------------------
+#include <stdlib.h>
+
+void* _TIFFmalloc(tsize_t s) {
+    return malloc((size_t)s);
+}
+
+--------------------
+
+--------------------
+void _modinit(module_t *m) {
+    if(!m) {
+        printf("Error: Null module\n");
+        return;
+    }
+    if(service_find("chanserv") == NULL) {
+        printf("Error: Could not find chanserv\n");
+        return;
+    }
+    service_named_bind_command("chanserv", &cs_flags);
+}
+
+--------------------
+static char * print_string ( cJSON * item )  {
+    if(item == NULL || item->type != cJSON_String){
+        return NULL; // handle a potential null item, or a non-string item
+    }
+    return print_string_ptr ( item -> valuestring ) ;  
+}
+
+--------------------
+#include <string.h>
+
+int file_is_y4m(const char detect[4]) {
+  if (strncmp(detect, "YUV4", 4) == 0) {
+    return 1;
+  }
+  return 0;
+}
+
+--------------------
+static void ast_dealloc(AST_object *self) {
+  if (self->dict != NULL) {
+    Py_CLEAR(self->dict);
+  }
+  Py_TYPE(self)->tp_free((PyObject*)self);
+}
+
+--------------------
+static void mark_commit(struct commit *c, void *data) {
+    if (!c || !data) {
+        return; // Check for null pointers
+    }
+    mark_object(&c->object, NULL, NULL, data);
+}
+
+--------------------
+void generic_pipe_buf_get(struct pipe_inode_info *pipe, struct pipe_buffer *buf) {
+    if (buf && buf->page) {
+        get_page(buf->page);
+    }
+}
+
+--------------------
+#include <linux/socket.h>
+
+static int sock_close(struct inode *inode, struct file *filp) {
+    struct socket *sock;
+    sock = SOCKET_I(inode);
+
+    if (sock) {
+        /* Release socket */
+        sock_release(sock);
+    }
+
+    return 0;
+}
+
+--------------------
+
+--------------------
+#include <string.h>
+
+int pure_strcmp ( const char * const s1 , const char * const s2 ) {
+    size_t s1_len = strlen(s1);
+    size_t s2_len = strlen(s2);
+
+    if (s1_len != s2_len) {
+        return 0; // Return 0 if the strings do not have the same length
+    }
+
+    return pure_memcmp ( s1 , s2 , s1_len + 1U ) ; // Compare the strings using memcmp
+}
+
+--------------------
+#include <stdlib.h>
+#include <string.h>
+
+static char * pool_strdup(const char * s) {
+    if(s == NULL) { // vulnerability 1: not checking for NULL input
+        return NULL;
+    }
+    size_t len = strlen(s);
+    char * r = (char*) pool_alloc(len + 1); // vulnerability 2: casting the void* returned by pool_alloc to char*
+    if(r == NULL) { // vulnerability 3: not checking if memory allocation failed
+        return NULL;
+    }
+    strcpy(r, s);
+    return r;
+}
+
+--------------------
+#include <linux/crypto.h>
+
+static struct crypto_skcipher *skcipher_bind(const char *name, u32 type, u32 mask)
+{
+    struct crypto_skcipher *tfm;
+
+    tfm = crypto_alloc_skcipher(name, type, mask);
+    if (IS_ERR(tfm))
+        return NULL;
+
+    return tfm;
+}
+
+--------------------
+void vp9_frame_init_quantizer(VP9_COMP* cpi) {  
+    cpi->zbin_mode_boost = 0;    
+    // Check if cpi or cpi->mb is NULL    
+    if( cpi == NULL ) return;      
+    if( cpi->mb == NULL ) return;  
+    vp9_init_plane_quantizers(cpi, cpi->mb);  
+}
+
+--------------------
+void usage_exit ( char* exec_name ) {  
+    fprintf ( stderr , "Usage: %s <codec> <width> <height> <infile> <outfile>\n" , exec_name ) ; 
+    exit ( EXIT_FAILURE ) ; 
+}
+
+--------------------
+#include <sys/mount.h>
+#include <mntent.h>
+
+static inline int mount_entry_on_systemfs(struct mntent *mntent) {
+    if (mount_entry_on_generic(mntent, mntent->mnt_dir) == 0) {
+        return 0;
+    } else {
+        return -1;
+    }
+}
+
+--------------------
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/mount.h>
+#include <mntent.h>
+
+static inline int mount_entry_on_systemfs(struct mntent *mntent) {
+    if (mount_entry_on_generic(mntent, mntent->mnt_dir) == -1) {
+        perror("Failed to mount entry on systemfs");
+        return -1;
+    }
+    return 0;
+}
+
+--------------------
+static vpx_codec_err_t encoder_init(vpx_codec_ctx_t* ctx, vpx_codec_priv_enc_mr_cfg_t* data)
+{
+    if (!ctx || !data) // check if input parameters are valid
+        return VPX_CODEC_INVALID_PARAM;
+
+    return encoder_common_init(ctx); // call the encoder_common_init function
+}
+
+--------------------
+void test_checkout_nasty__git_tilde1(void) {
+#ifdef GIT_WIN32
+    const char* ref = "refs/heads/git_tilde1";
+    const char* path = ".git/foobar";
+    if (git_path_exists(ref) && git_path_exists(path)) {
+        test_checkout_fails(ref, path);
+    }
+#endif
+}
+
+--------------------

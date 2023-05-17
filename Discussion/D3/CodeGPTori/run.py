@@ -232,8 +232,8 @@ def test(args, model, tokenizer, device, epoch=0):
     model.train()
     predictions=[]
     accs = []
-    with open(os.path.join(args.output_dir,"test_{}.output".format(str(epoch))),'w') as f, \
-        open(os.path.join(args.output_dir,"test_{}.gold".format(str(epoch))),'w') as f1:
+    with open(os.path.join(args.output_dir,"test_{}_{}.output".format(str(epoch),args.model_name)),'w') as f, \
+        open(os.path.join(args.output_dir,"test_{}_{}.gold".format(str(epoch),args.model_name)),'w') as f1:
         for ref,gold in zip(p,eval_examples):
             predictions.append(str(gold.idx)+'\t'+ref)
             f.write(str(gold.idx)+'\t'+ref+'\n')
@@ -241,7 +241,7 @@ def test(args, model, tokenizer, device, epoch=0):
             accs.append(ref==gold.target)     
 
     (goldMap, predictionMap) = bleu.computeMaps(predictions, os.path.join(args.output_dir, \
-        "test_{}.gold".format(epoch))) 
+        "test_{}_{}.gold".format(epoch,args.model_name)))
     dev_bleu=round(bleu.bleuFromMaps(goldMap, predictionMap)[0],2)
     xMatch = round(np.mean(accs)*100,4)
     

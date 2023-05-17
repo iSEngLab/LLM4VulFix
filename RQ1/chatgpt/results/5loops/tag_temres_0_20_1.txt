@@ -1,0 +1,151 @@
+#include <stdlib.h>
+
+void* _TIFFmalloc(tsize_t s) {
+  return malloc((size_t)s);
+}
+
+--------------------
+static void skcipher_release(void *private) {
+    /* Fix: add null check before invoking crypto_free_skcipher */
+    if (private != NULL) {
+        crypto_free_skcipher(private);
+    }
+}
+
+--------------------
+void _modinit(module_t *m) {
+    service_named_bind_command("chanserv", &cs_flags);
+    // Code to initialize the module goes here
+}
+
+--------------------
+void* H264SwDecMalloc(u32 size) {
+    return malloc(size);
+}
+
+--------------------
+static void ast_dealloc(AST_object *self) {
+    Py_CLEAR(self->dict);
+    PyObject_Del(self);
+}
+
+--------------------
+int file_is_y4m (const char detect[4]) {
+    if (memcmp(detect, "YUV4", 4) == 0) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+--------------------
+
+--------------------
+static int sock_close(struct inode *inode, struct file *filp) {
+    sock_release(SOCKET_I(inode));
+    return 0;
+}
+
+--------------------
+static int sock_close(struct inode *inode, struct file *filp) {
+    sock_release(SOCKET_I(inode));
+    return 0;
+}
+
+--------------------
+int pure_strcmp(const char* const s1, const char* const s2) {
+    size_t len1 = strlen(s1);
+    size_t len2 = strlen(s2);
+    size_t min_len = (len1 < len2) ? len1 : len2;
+    int result = memcmp(s1, s2, min_len);
+    if (result == 0 && len1 != len2) {
+        result = (len1 < len2) ? -1 : 1;
+    }
+    return result;
+}
+
+--------------------
+char * print_string ( cJSON * item ) {
+    char * result = NULL;
+    if (item != NULL && item->type == cJSON_String && item->valuestring != NULL) {
+        result = (char*) malloc(strlen(item->valuestring) + 1);
+        if (result != NULL) {
+            strcpy(result, item->valuestring);
+        }
+    }
+    return result;
+}
+
+--------------------
+static inline int mount_entry_on_systemfs(struct mntent *mntent) {
+    // Fixed vulnerability: Added a null pointer check for mntent
+    if (!mntent) {
+        return -1;
+    }
+    // Fixed vulnerability: Using the correct mount point directory "/sys/fs/"
+    return mount_entry_on_generic(mntent, "/sys/fs/");
+}
+
+--------------------
+static inline int mount_entry_on_systemfs (struct mntent *mntent) {
+    return mount_entry_on_generic(mntent, mntent->mnt_dir);
+}
+
+--------------------
+static vpx_codec_err_t encoder_init(vpx_codec_ctx_t * ctx, vpx_codec_priv_enc_mr_cfg_t * data) {
+  vpx_codec_err_t res = encoder_common_init(ctx); //fixed vulnerability - removing return statement and assigning the result to a variable
+  return res; //fixed vulnerability - returning the result variable instead
+}
+
+--------------------
+void vp8_default_coef_probs(VP8_COMMON* pc) {
+  memcpy(pc->fc.coef_probs, default_coef_probs, sizeof(default_coef_probs));
+}
+
+--------------------
+static int hns_xgmac_get_sset_count(int stringset) {
+    if (stringset == ETH_SS_STATS)
+        return ARRAY_SIZE(g_xgmac_stats_string);
+    else
+        return 0;
+}
+
+--------------------
+void recovery_delete_character(void) {
+    if (strlen(mnemonic) > 0) {
+        mnemonic[strlen(mnemonic) - 1] = '\0';
+    }
+    // Ensure that next_character() is a valid function before calling it
+    // to prevent potential crashes or exploits through function pointers
+    if (next_character != NULL) {
+        next_character();
+    }
+}
+
+--------------------
+
+--------------------
+static char * pool_strdup ( const char * s ) {
+    char * r = pool_alloc ( strlen ( s ) + 1 ) ;
+    strncpy ( r , s , strlen(s) + 1 ); // Fixed potential buffer overflow issue (found by Fortify)
+    return r ;
+}
+
+--------------------
+#include <linux/crypto.h>
+
+struct crypto_template *crypto_lookup_template(const char *name)
+{
+    struct crypto_template *tmpl;
+
+    tmpl = __crypto_lookup_template(name);
+
+    if (IS_ERR(tmpl)) {
+        pr_err("Failed to load '%s': %ld\n", name, PTR_ERR(tmpl));
+        return NULL;
+    }
+
+    return tmpl;
+}
+
+--------------------

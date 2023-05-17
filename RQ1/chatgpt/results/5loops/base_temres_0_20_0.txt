@@ -1,0 +1,211 @@
+#include <stdlib.h>
+
+void* H264SwDecMalloc (u32 size) {
+    if (size == 0) return NULL;
+    return malloc(size);
+}
+
+--------------------
+#include <stdlib.h>
+
+tdata_t _TIFFmalloc(tsize_t s) {
+    return malloc(s);
+}
+
+--------------------
+#include <linux/crypto.h>
+
+static void skcipher_release (struct crypto_skcipher *tfm) {
+    crypto_free_skcipher(tfm);
+}
+
+--------------------
+void _modinit(module_t* m) {
+    if (!m) {
+        return;
+    }
+    service_named_bind_command("chanserv", &cs_flags);
+}
+
+--------------------
+static char* print_string(cJSON* item) {
+    if(item == NULL || item->valuestring == NULL) { //check if the item or value string is null
+        return NULL;
+    }
+    return print_string_ptr(item->valuestring); //return the string pointer
+}
+
+--------------------
+#include <string.h>
+
+int file_is_y4m(const char* detect) {
+  if (memcmp(detect, "YUV4", 4) == 0) {
+    return 1;
+  }
+  return 0;
+}
+
+--------------------
+static void ast_dealloc(AST_object* self) {
+    Py_CLEAR(self->dict);
+    PyObject_Free(self); //Replace Py_TYPE(self)->tp_free(self) with PyObject_Free(self) to fix the vulnerability.
+}
+
+--------------------
+static void mark_commit (struct commit *c, void *data) {
+    if (!c)
+        return;
+    mark_object(&c->object, NULL, NULL, data);
+}
+
+--------------------
+void generic_pipe_buf_get(struct pipe_inode_info *pipe, struct pipe_buffer *buf) {
+    if (pipe && buf) { //check if pipe and buf are not NULL
+        struct page *pg = buf->page;
+        if (pg) { //check if page is not NULL
+            get_page(pg);
+        }
+    }
+}
+
+--------------------
+static int sock_close(struct inode *inode, struct file *filp) {
+    struct socket *sock;
+    sock = SOCKET_I(inode);
+    if (!sock) {
+        return -EINVAL;
+    }
+    sock_release(sock);
+    return 0;
+}
+
+--------------------
+#include <linux/socket.h>
+
+static int sock_close(struct inode *inode, struct file *filp) {
+    if (SOCKET_I(inode))
+        sock_release(SOCKET_I(inode));
+    return 0;
+}
+
+--------------------
+#include <string.h>
+
+int pure_strcmp ( const char * const s1 , const char * const s2 ) {
+    size_t s1_len = strlen(s1);
+    size_t s2_len = strlen(s2);
+    size_t max_len = (s1_len > s2_len) ? s1_len : s2_len;
+    return pure_memcmp(s1, s2, max_len + 1U);
+}
+
+--------------------
+#include <stdlib.h>
+#include <string.h>
+
+static char * pool_strdup(const char *s) {
+    if (s == NULL) { // check for null input
+        return NULL;
+    }
+
+    size_t len = strlen(s);
+    char *r = malloc((len + 1) * sizeof(char)); // safer memory allocation
+    if (r == NULL) { // check if allocation was successful
+        return NULL;
+    }
+
+    strcpy(r, s);
+    return r;
+}
+
+--------------------
+#include<linux/crypto.h>
+
+static struct crypto_skcipher *skcipher_bind(const char *name, u32 type, u32 mask)
+{
+    struct crypto_skcipher *tfm = crypto_alloc_skcipher(name, type, mask);
+    return IS_ERR(tfm) ? NULL : tfm;
+}
+
+--------------------
+void vp9_frame_init_quantizer(VP9_COMP* cpi) {
+    cpi->zbin_mode_boost = 0;
+    vp9_init_plane_quantizers(cpi, &cpi->common.seg);
+}
+
+--------------------
+void usage_exit(char* exec_name) {
+    fprintf(stderr, "Usage: %s <codec> <width> <height> <infile> <outfile>\n", exec_name);
+    exit(EXIT_FAILURE);
+}
+
+--------------------
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <mntent.h>
+#include <sys/mount.h>
+
+static inline int mount_entry_on_systemfs(struct mntent *mntent) {
+    if (strncmp(mntent->mnt_fsname, "/", 1) == 0) {
+        // Check if the mount point is not already mounted
+        FILE *fp = setmntent("/etc/mtab", "r");
+        struct mntent *e;
+        while ((e = getmntent(fp)) != NULL) {
+            if (strcmp(e->mnt_dir, mntent->mnt_dir) == 0) {
+                fprintf(stderr, "Error: %s is already mounted!\n", mntent->mnt_dir);
+                endmntent(fp);
+                return -1;
+            }
+        }
+        endmntent(fp);
+
+        // Mount the entry
+        int res = mount(mntent->mnt_fsname, mntent->mnt_dir, NULL, MS_NOATIME | MS_NODEV | MS_NOSUID | MS_RDONLY, NULL);
+        if (res != 0) {
+            fprintf(stderr, "Error: Failed to mount %s on %s\n", mntent->mnt_fsname, mntent->mnt_dir);
+            return -1;
+        }
+    } else {
+        fprintf(stderr, "Error: %s is not a valid filesystem to mount!\n", mntent->mnt_fsname);
+        return -1;
+    }
+    return 0;
+}
+
+--------------------
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <mntent.h>
+#include <sys/mount.h>
+
+static inline int mount_entry_on_systemfs(struct mntent *mntent) {
+  int ret = 0;
+  if (!mntent || !mntent->mnt_dir)
+    return -1;
+  
+  ret = mount_entry_on_generic(mntent, mntent->mnt_dir);
+  if (ret < 0)
+    perror("Failed to mount the entry");
+    
+  return ret;
+}
+
+--------------------
+static vpx_codec_err_t encoder_init(vpx_codec_ctx_t * ctx, vpx_codec_priv_enc_mr_cfg_t * data) {
+    if (!ctx || !data) {
+        return VPX_CODEC_INVALID_PARAM;
+    }
+    return encoder_common_init(ctx);
+}
+
+--------------------
+void test_checkout_nasty__git_tilde1(void) {
+    #ifdef GIT_WIN32
+        char *branch_name = "refs/heads/git_tilde1";
+        char *dir_name = ".git/foobar";
+        test_checkout_fails(branch_name, dir_name);
+    #endif
+}
+
+--------------------

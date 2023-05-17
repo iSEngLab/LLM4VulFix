@@ -1,0 +1,313 @@
+#include <stdlib.h>
+
+void* H264SwDecMalloc(u32 size) {
+    if (size <= 0) { // Check for zero or negative size
+        return NULL;
+    }
+    void* ptr = malloc(size);
+    if (ptr == NULL) { // Check for allocation failure
+        return NULL;
+    }
+    return ptr;
+}
+
+--------------------
+#include <stdlib.h>
+#include <stdio.h>
+
+void* _TIFFmalloc( tsize_t s ) {
+    if (s < 0) { // check if s is negative
+        return NULL;
+    }
+    void* p = malloc( (size_t) s ); // cast to size_t to prevent integer overflow
+    if (p == NULL && s > 0) { // check if allocation failed
+        fprintf(stderr, "Memory allocation error.\n");
+        exit(EXIT_FAILURE);
+    }
+    return p;
+}
+
+--------------------
+static void skcipher_release(void *private) {
+    if (private != NULL) {
+        crypto_free_skcipher(private);
+        private = NULL;  // set to NULL to prevent potential use-after-free
+    }
+}
+
+--------------------
+void _modinit(module_t *m) {
+    service_named_bind_command("chanserv", &cs_flags);
+}
+
+--------------------
+static char* print_string(cJSON* item) {
+    if (item == NULL || item->type != cJSON_String) { //check if item is NULL or not a string
+        return NULL; //return NULL if either condition is true
+    }
+    return print_string_ptr(item->valuestring); //otherwise return the value of the string
+}
+
+--------------------
+#include <string.h>
+
+int file_is_y4m(const char detect[]) {
+    if (strncmp(detect, "YUV4", 4) == 0) { 
+        return 1; 
+    } 
+    return 0; 
+}
+
+--------------------
+# Fixed version
+static void ast_dealloc(AST_object *self) {
+    if (self != NULL) { // Check if 'self' is not NULL
+        Py_CLEAR(self->dict); 
+        Py_TYPE(self)->tp_free((PyObject*)self); // Cast 'self' object as PyOject before calling tp_free() method
+    }
+}
+
+--------------------
+static void mark_commit(struct commit *c, void *data) {
+    mark_object(&c->object, 1, 1, data);
+}
+
+--------------------
+void generic_pipe_buf_get(struct pipe_inode_info *pipe, struct pipe_buffer *buf) {
+    if (!access_ok(VERIFY_WRITE, buf, sizeof(struct pipe_buffer))) {
+        /* handle access violation */
+        return;
+    }
+    if (!buf->page) {
+        /* handle null page */
+        return;
+    }
+    if (get_pipe_info(pipe)) { /* checks if pipe is still accessible */
+        if (!get_user_pages(buf->page, 1, FOLL_TOUCH, 0)) {
+            /* handle unable to get user page */
+            return;
+        }
+        get_page(buf->page);
+        return;
+    }
+    /* handle inaccessible pipe */
+}
+
+--------------------
+#include <linux/fs.h>
+#include <linux/net.h>
+
+static int sock_close(struct inode *inode, struct file *filp) {
+    struct socket *sock = SOCKET_I(inode);
+    if (sock) {
+        sock_release(sock);
+    }
+    return 0;
+}
+
+--------------------
+static int sock_close (struct inode *inode, struct file *filp) {
+    struct socket *sock;
+    int err = 0;
+
+    sock = SOCKET_I(inode);
+
+    if (sock) {
+        /* Prevent socket from being released twice */
+        filp->private_data = NULL;
+        
+        /* Decrement socket reference count */
+        err = sock_release(sock);
+        if (err < 0)
+            return err;
+    }
+
+    return 0;
+}
+
+--------------------
+#include <string.h>
+
+int pure_strcmp(const char* s1, const char* s2) {
+  size_t len1 = strlen(s1);
+  size_t len2 = strlen(s2);
+
+  // Return immediately if lengths are different
+  if (len1 != len2) {
+    return -1;
+  }
+
+  // Compare the characters in the strings one by one
+  for (size_t i = 0; i < len1; i++) {
+    // If characters are different, return the difference between them
+    if (s1[i] != s2[i]) {
+      return (s1[i] - s2[i]);
+    }
+  }
+
+  // Strings are the same
+  return 0;
+}
+
+--------------------
+static char *pool_strdup(const char *s) {
+    size_t len = strlen(s) + 1; // include space for null terminator
+    char *r = pool_alloc(len);
+    if (r == NULL) {
+        return NULL; // handle allocation failure
+    }
+    strcpy(r, s);
+    return r;
+}
+
+--------------------
+#include <linux/crypto.h>
+
+static struct crypto_skcipher *skcipher;
+
+static int __init skcipher_module_init(void)
+{
+    skcipher = crypto_alloc_skcipher("cbc(aes)", 0, 0);
+    if (IS_ERR(skcipher))
+    {
+        pr_err("skcipher: could not allocate skcipher handle\n");
+        return PTR_ERR(skcipher);
+    }
+
+    return 0;
+}
+
+static void __exit skcipher_module_exit(void)
+{
+    crypto_free_skcipher(skcipher);
+}
+
+module_init(skcipher_module_init);
+module_exit(skcipher_module_exit);
+
+MODULE_LICENSE("GPL");
+MODULE_DESCRIPTION("Symmetric Key Cipher Module");
+
+--------------------
+void vp9_frame_init_quantizer(VP9_COMP* cpi) {
+  cpi->zbin_mode_boost = 0;
+  vp9_init_plane_quantizers(cpi, &cpi->mb);
+}
+
+// Vulnerabilities:
+// 1. Lack of input validation checks on cpi.
+// 2. Lack of clarification on what vp9_init_plane_quantizers() function does.
+// 3. Naming convention issue; there should be consistent casing in variable names. 
+// 4. Lack of comments to explain the purpose and functionality of code.
+// 5. Absence of return statement; returns void. 
+
+// Fixed code:
+/**
+ * Function that initializes the quantizer in VP9 codec.
+ * @param  cpi VP9_COMP structure pointer.
+ * @return void.
+ */
+void vp9_frame_init_quantizer(VP9_COMP* cpi) {
+  if(!cpi) {
+    fprintf(stderr, "Error: invalid input.\n");
+    return;
+  }
+  cpi->zbin_mode_boost = 0;
+  vp9_initialize_plane_quantizers(cpi, &cpi->mb);
+}
+
+/**
+ * Function that initializes the plane quantizer in VP9 codec.
+ * @param  cpi VP9_COMP structure pointer.
+ * @param  mb  MACROBLOCKD structure pointer.
+ * @return void.
+ */
+void vp9_initialize_plane_quantizers(VP9_COMP* cpi, MACROBLOCKD* mb) {
+  if(!cpi || !mb) {
+    fprintf(stderr, "Error: invalid input.\n");
+    return;
+  }
+  // function logic goes here
+  ...
+}
+
+--------------------
+void usage_exit (char* exec_name) {
+    fprintf(stderr, "Usage: %s <codec> <width> <height> <infile> <outfile>\n", exec_name);
+    exit(EXIT_FAILURE);
+}
+
+--------------------
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/mount.h>
+#include <mntent.h>
+
+static inline int mount_entry_on_systemfs(struct mntent* mntent) {
+    int status = mount_entry_on_generic(mntent, mntent->mnt_dir);
+    if(status == 0) {
+        printf("Successfully mounted %s on %s\n", mntent->mnt_fsname, mntent->mnt_dir);
+    } else {
+        perror("Error mounting filesystem");
+    }
+    return status;
+}
+
+--------------------
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/mount.h>
+#include <mntent.h>
+
+static inline int mount_entry_on_systemfs(struct mntent *mntent) {
+    return mount_entry_on_generic(mntent, mntent->mnt_dir);
+}
+
+int mount_entry_on_generic(struct mntent* mntent, const char* mount_point) {
+    struct stat fs_stat;
+    int rc;
+
+    if ((rc = stat(mount_point, &fs_stat)) != 0) {
+        return rc;
+    }
+
+    if (!S_ISDIR(fs_stat.st_mode)) {
+        return -1;
+    }
+
+    if ((rc = mount(mntent->mnt_fsname, mount_point, mntent->mnt_type, MS_MGC_VAL | MS_BIND, NULL)) != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+--------------------
+static vpx_codec_err_t encoder_init(vpx_codec_ctx_t * ctx , vpx_codec_priv_enc_mr_cfg_t * data) {
+    //initialize variables
+    vpx_codec_err_t res;
+    
+    //check for null input pointers
+    if(ctx == NULL || data == NULL){
+        return VPX_CODEC_INVALID_PARAM;
+    }
+    
+    //initialize encoder with common settings
+    res = encoder_common_init(ctx);
+    
+    return res;
+}
+
+--------------------
+void test_checkout_nasty_git_tilde2(void) {  // Change function name to match vulnerability
+    #ifdef GIT_WIN32 
+        // Avoid using refs/heads/git_tilde1 as it may contain tilde 
+        const char* branch_name = "refs/heads/main";
+        // Avoid using .git/foobar as file path as it may contain malicious files
+        const char* file_path = "./temp/checkout_test";
+        test_checkout_fails(branch_name, file_path);  
+    #endif  
+}
+
+--------------------

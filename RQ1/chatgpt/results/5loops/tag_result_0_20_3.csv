@@ -1,0 +1,164 @@
+,inputs,outputs,targets,acuuracy
+0," tdata_t _TIFFmalloc ( tsize_t s ) <S2SV_StartBug> { <S2SV_EndBug> return ( malloc ( ( size_t ) s ) ) ; }
+","#include <stdlib.h>
+
+tdata_t _TIFFmalloc (tsize_t s) {
+    return (tdata_t) malloc((size_t) s);
+}
+",tdata_t _TIFFmalloc ( tsize_t s ) { if ( s == 0 ) return ( ( void * ) NULL ) ; return ( malloc ( ( size_t ) s ) ) ; },0
+1," static void skcipher_release ( void * private ) { <S2SV_StartBug> crypto_free_skcipher ( private ) ; <S2SV_EndBug> }
+","static void skcipher_release(void *private) {
+    crypto_free_skcipher(private);
+}
+",static void skcipher_release ( void * private ) { struct skcipher_tfm * tfm = private ; crypto_free_skcipher ( tfm -> skcipher ) ; kfree ( tfm ) ; },0
+2," void _modinit ( module_t * m ) { service_named_bind_command ( ""chanserv"" , & cs_flags ) ; <S2SV_StartBug> } <S2SV_EndBug>
+","void _modinit(module_t *m) {
+    service_named_bind_command(""chanserv"", &cs_flags);
+}
+","void _modinit ( module_t * m ) { service_named_bind_command ( ""chanserv"" , & cs_flags ) ; add_bool_conf_item ( ""ANOPE_FLAGS_COMPAT"" , & chansvs . me -> conf_table , 0 , & anope_flags_compat , true ) ; hook_add_event ( ""nick_can_register"" ) ; hook_add_nick_can_register ( check_registration_keywords ) ; hook_add_event ( ""user_can_register"" ) ; hook_add_user_can_register ( check_registration_keywords ) ; }",0
+3," <S2SV_StartBug> void * H264SwDecMalloc ( u32 size ) <S2SV_EndBug> { <S2SV_StartBug> return malloc ( size ) ; <S2SV_EndBug> }
+","void * H264SwDecMalloc (u32 size) {
+    void *ptr = malloc(size); // Allocate memory
+    if (ptr == NULL) { // Check if memory was allocated successfully
+        // Handle error
+        exit(1);
+    }
+    return ptr; // Return pointer to allocated memory
+}
+","void * H264SwDecMalloc ( u32 size , u32 num ) { if ( size > UINT32_MAX / num ) { return NULL ; } return malloc ( size * num ) ; }",0
+4," static void ast_dealloc ( AST_object * self ) <S2SV_StartBug> { <S2SV_EndBug> Py_CLEAR ( self -> dict ) ; Py_TYPE ( self ) -> tp_free ( self ) ; }
+","static void ast_dealloc(AST_object* self) {
+    Py_CLEAR(self->dict);
+    Py_TYPE(self)->tp_free((PyObject*)self);
+}
+",static void ast_dealloc ( AST_object * self ) { PyObject_GC_UnTrack ( self ) ; Py_CLEAR ( self -> dict ) ; Py_TYPE ( self ) -> tp_free ( self ) ; },0
+5," <S2SV_StartBug> int file_is_y4m ( const char detect [ 4 ] ) { <S2SV_EndBug> if ( memcmp ( detect , ""YUV4"" , 4 ) == 0 ) { return 1 ; } return 0 ; }
+","int file_is_y4m(const char detect[4]) {
+    if (memcmp(detect, ""YUV4"", 4) == 0) {
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+","static int file_is_y4m ( const char detect [ 4 ] ) { if ( memcmp ( detect , ""YUV4"" , 4 ) == 0 ) { return 1 ; } return 0 ; }",0
+6," static void mark_commit ( struct commit * c , void * data ) { <S2SV_StartBug> mark_object ( & c -> object , NULL , NULL , data ) ; <S2SV_EndBug> }
+","static void mark_commit(struct commit *c, void *data) {
+    mark_object(&c->object, NULL, NULL, data);
+}
+","static void mark_commit ( struct commit * c , void * data ) { mark_object ( & c -> object , NULL , data ) ; }",0
+7," static int sock_close ( struct inode * inode , struct file * filp ) { <S2SV_StartBug> sock_release ( SOCKET_I ( inode ) ) ; <S2SV_EndBug> return 0 ; }
+",,"static int sock_close ( struct inode * inode , struct file * filp ) { __sock_release ( SOCKET_I ( inode ) , inode ) ; return 0 ; }",0
+8," static int sock_close ( struct inode * inode , struct file * filp ) { <S2SV_StartBug> sock_release ( SOCKET_I ( inode ) ) ; <S2SV_EndBug> return 0 ; }
+","static int sock_close (struct inode *inode, struct file *filp) {
+    sock_release(SOCKET_I(inode)); 
+    return 0;
+}
+","static int sock_close ( struct inode * inode , struct file * filp ) { __sock_release ( SOCKET_I ( inode ) , inode ) ; return 0 ; }",0
+9," int pure_strcmp ( const char * const s1 , const char * const s2 ) { <S2SV_StartBug> return pure_memcmp ( s1 , s2 , strlen ( s1 ) + 1U ) ; <S2SV_EndBug> }
+","#include <cstring>
+
+int pure_strcmp (const char *const s1, const char *const s2) {
+    return strcmp(s1, s2);
+}
+","int pure_strcmp ( const char * const s1 , const char * const s2 ) { const size_t s1_len = strlen ( s1 ) ; const size_t s2_len = strlen ( s2 ) ; const size_t len = ( s1_len < s2_len ) ? s1_len : s2_len ; return pure_memcmp ( s1 , s2 , len + 1 ) ; }",0
+10," <S2SV_StartBug> static char * print_string ( cJSON * item ) <S2SV_EndBug> { <S2SV_StartBug> return print_string_ptr ( item -> valuestring ) ; <S2SV_EndBug> }
+","// A safe version of print_string() that checks for input validity
+static char* print_string(cJSON* item) {
+  if (item == NULL || item->type != cJSON_String) {
+    return NULL;
+  }
+
+  return print_string_ptr(item->valuestring);
+}
+","static char * print_string ( cJSON * item , printbuffer * p ) { return print_string_ptr ( item -> valuestring , p ) ; }",0
+11," static inline int mount_entry_on_systemfs ( struct mntent * mntent ) { <S2SV_StartBug> return mount_entry_on_generic ( mntent , mntent -> mnt_dir ) ; <S2SV_EndBug> }
+","#include <sys/mount.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <mntent.h>
+
+// function to mount the entry on systemfs
+static inline int mount_entry_on_systemfs(struct mntent *mntent) {
+
+    // validate the input
+    if(mntent == NULL || mntent->mnt_dir == NULL) {
+        fprintf(stderr, ""Error: invalid input\n"");
+        return -1;
+    }
+
+    // check if the mount point already exists
+    struct mntent *existing_mnt;
+    FILE *mounts_file = setmntent(""/etc/mtab"", ""r"");
+    while((existing_mnt = getmntent(mounts_file)) != NULL) {
+        if(strcmp(existing_mnt->mnt_dir, mntent->mnt_dir) == 0) {
+            fprintf(stderr, ""Error: mount point %s already exists\n"", mntent->mnt_dir);
+            endmntent(mounts_file);
+            return -1;
+        }
+    }
+    endmntent(mounts_file);
+
+    // mount the entry on systemfs
+    int ret = mount_entry_on_generic(mntent, mntent->mnt_dir);
+    if(ret == -1) {
+        fprintf(stderr, ""Error: failed to mount entry\n"");
+        return -1;
+    }
+    return 0;
+}
+","static inline int mount_entry_on_systemfs ( struct mntent * mntent ) { return mount_entry_on_generic ( mntent , mntent -> mnt_dir , NULL ) ; }",0
+12," static inline int mount_entry_on_systemfs ( struct mntent * mntent ) { <S2SV_StartBug> return mount_entry_on_generic ( mntent , mntent -> mnt_dir ) ; <S2SV_EndBug> }
+","static inline int mount_entry_on_systemfs(struct mntent *mntent)
+{
+    return mount_entry_on_generic(mntent, mntent->mnt_dir);
+}
+","static inline int mount_entry_on_systemfs ( struct mntent * mntent ) { return mount_entry_on_generic ( mntent , mntent -> mnt_dir , NULL ) ; }",0
+13," static vpx_codec_err_t encoder_init ( vpx_codec_ctx_t * ctx , vpx_codec_priv_enc_mr_cfg_t * data ) { <S2SV_StartBug> return encoder_common_init ( ctx ) ; <S2SV_EndBug> }
+","static vpx_codec_err_t encoder_init(vpx_codec_ctx_t *ctx, vpx_codec_priv_enc_mr_cfg_t *data) {
+    vpx_codec_err_t ret = encoder_common_init(ctx);
+    return ret;
+}
+","static vpx_codec_err_t encoder_init ( vpx_codec_ctx_t * ctx , vpx_codec_priv_enc_mr_cfg_t * data ) { vpx_codec_err_t res = VPX_CODEC_OK ; ( void ) data ; if ( ctx -> priv == NULL ) { vpx_codec_alg_priv_t * const priv = vpx_calloc ( 1 , sizeof ( * priv ) ) ; if ( priv == NULL ) return VPX_CODEC_MEM_ERROR ; ctx -> priv = ( vpx_codec_priv_t * ) priv ; ctx -> priv -> init_flags = ctx -> init_flags ; ctx -> priv -> enc . total_encoders = 1 ; priv -> buffer_pool = ( BufferPool * ) vpx_calloc ( 1 , sizeof ( BufferPool ) ) ; if ( priv -> buffer_pool == NULL ) return VPX_CODEC_MEM_ERROR ; # if CONFIG_MULTITHREAD if ( pthread_mutex_init ( & priv -> buffer_pool -> pool_mutex , NULL ) ) { return VPX_CODEC_MEM_ERROR ; } # endif if ( ctx -> config . enc ) { priv -> cfg = * ctx -> config . enc ; ctx -> config . enc = & priv -> cfg ; } priv -> extra_cfg = default_extra_cfg ; once ( vp9_initialize_enc ) ; res = validate_config ( priv , & priv -> cfg , & priv -> extra_cfg ) ; if ( res == VPX_CODEC_OK ) { set_encoder_config ( & priv -> oxcf , & priv -> cfg , & priv -> extra_cfg ) ; # if CONFIG_VP9_HIGHBITDEPTH priv -> oxcf . use_highbitdepth = ( ctx -> init_flags & VPX_CODEC_USE_HIGHBITDEPTH ) ? 1 : 0 ; # endif priv -> cpi = vp9_create_compressor ( & priv -> oxcf , priv -> buffer_pool ) ; if ( priv -> cpi == NULL ) res = VPX_CODEC_MEM_ERROR ; else priv -> cpi -> output_pkt_list = & priv -> pkt_list . head ; } } return res ; }",0
+14," void vp8_default_coef_probs ( VP8_COMMON * pc ) { <S2SV_StartBug> vpx_memcpy ( pc -> fc . coef_probs , default_coef_probs , <S2SV_EndBug> sizeof ( default_coef_probs ) ) ; }
+","void vp8_default_coef_probs(VP8_COMMON *pc) {
+  memcpy(pc->fc.coef_probs, default_coef_probs, sizeof(default_coef_probs));
+}
+","void vp8_default_coef_probs ( VP8_COMMON * pc ) { memcpy ( pc -> fc . coef_probs , default_coef_probs , sizeof ( default_coef_probs ) ) ; }",1
+15," static int hns_xgmac_get_sset_count ( int stringset ) { <S2SV_StartBug> if ( stringset == ETH_SS_STATS ) <S2SV_EndBug> return ARRAY_SIZE ( g_xgmac_stats_string ) ; return 0 ; }
+","static int hns_xgmac_get_sset_count ( int stringset ) { 
+    // Fixes vulnerability where the function always returns ARRAY_SIZE ( g_xgmac_stats_string )
+    if ( stringset == ETH_SS_STATS )
+        return ARRAY_SIZE ( g_xgmac_stats_string ) ;
+    // Fixes vulnerability where the function returns 0 if the input is not ETH_SS_STATS 
+    else if (stringset == ETH_SS_PRIV_FLAGS)
+        return ARRAY_SIZE(g_xgmac_priv_flags);
+    else
+        return -EINVAL;
+}
+",static int hns_xgmac_get_sset_count ( int stringset ) { if ( stringset == ETH_SS_STATS || stringset == ETH_SS_PRIV_FLAGS ) return ARRAY_SIZE ( g_xgmac_stats_string ) ; return 0 ; },0
+16," void recovery_delete_character ( void ) <S2SV_StartBug> { <S2SV_EndBug> if ( strlen ( mnemonic ) > 0 ) { mnemonic [ strlen ( mnemonic ) - 1 ] = '\\0' ; } next_character ( ) ; }
+","void recovery_delete_character(void) {
+  if (strlen(mnemonic) > 0) {
+    mnemonic[strlen(mnemonic)-1] = '\0';
+  }
+  next_character();
+}
+","void recovery_delete_character ( void ) { if ( ! recovery_started ) { recovery_abort ( ) ; fsm_sendFailure ( FailureType_Failure_UnexpectedMessage , ""NotinRecoverymode"" ) ; layoutHome ( ) ; return ; } if ( strlen ( mnemonic ) > 0 ) { mnemonic [ strlen ( mnemonic ) - 1 ] = '\\0' ; } next_character ( ) ; }",0
+17," <S2SV_StartBug> void generic_pipe_buf_get ( struct pipe_inode_info * pipe , struct pipe_buffer * buf ) <S2SV_EndBug> { <S2SV_StartBug> get_page ( buf -> page ) ; <S2SV_EndBug> }
+",,"bool generic_pipe_buf_get ( struct pipe_inode_info * pipe , struct pipe_buffer * buf ) { return try_get_page ( buf -> page ) ; }",0
+18," static char * pool_strdup ( const char * s ) { <S2SV_StartBug> char * r = pool_alloc ( strlen ( s ) + 1 ) ; <S2SV_EndBug> <S2SV_StartBug> strcpy ( r , s ) ; <S2SV_EndBug> return r ; }
+","static char * pool_strdup(const char *s) {
+    char *r = pool_alloc(strlen(s) + 1);
+    if (r != NULL) {
+        strcpy(r, s);
+    }
+    return r;
+}
+","static char * pool_strdup ( const char * s ) { size_t len = strlen ( s ) + 1 ; char * r = pool_alloc ( len ) ; memcpy ( r , s , len ) ; return r ; }",0
+19," struct crypto_template * crypto_lookup_template ( const char * name ) { <S2SV_StartBug> return try_then_request_module ( __crypto_lookup_template ( name ) , ""%s"" , <S2SV_EndBug> name ) ; }
+","struct crypto_template *crypto_lookup_template(const char *name) {
+    return try_then_request_module(__crypto_lookup_template(name), ""%s"", name);
+}
+","struct crypto_template * crypto_lookup_template ( const char * name ) { return try_then_request_module ( __crypto_lookup_template ( name ) , ""crypto-%s"" , name ) ; }",0

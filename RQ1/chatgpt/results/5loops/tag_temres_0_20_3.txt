@@ -1,0 +1,163 @@
+#include <stdlib.h>
+
+tdata_t _TIFFmalloc (tsize_t s) {
+    return (tdata_t) malloc((size_t) s);
+}
+
+--------------------
+static void skcipher_release(void *private) {
+    crypto_free_skcipher(private);
+}
+
+--------------------
+void _modinit(module_t *m) {
+    service_named_bind_command("chanserv", &cs_flags);
+}
+
+--------------------
+void * H264SwDecMalloc (u32 size) {
+    void *ptr = malloc(size); // Allocate memory
+    if (ptr == NULL) { // Check if memory was allocated successfully
+        // Handle error
+        exit(1);
+    }
+    return ptr; // Return pointer to allocated memory
+}
+
+--------------------
+static void ast_dealloc(AST_object* self) {
+    Py_CLEAR(self->dict);
+    Py_TYPE(self)->tp_free((PyObject*)self);
+}
+
+--------------------
+int file_is_y4m(const char detect[4]) {
+    if (memcmp(detect, "YUV4", 4) == 0) {
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
+--------------------
+static void mark_commit(struct commit *c, void *data) {
+    mark_object(&c->object, NULL, NULL, data);
+}
+
+--------------------
+
+--------------------
+static int sock_close (struct inode *inode, struct file *filp) {
+    sock_release(SOCKET_I(inode)); 
+    return 0;
+}
+
+--------------------
+#include <cstring>
+
+int pure_strcmp (const char *const s1, const char *const s2) {
+    return strcmp(s1, s2);
+}
+
+--------------------
+// A safe version of print_string() that checks for input validity
+static char* print_string(cJSON* item) {
+  if (item == NULL || item->type != cJSON_String) {
+    return NULL;
+  }
+
+  return print_string_ptr(item->valuestring);
+}
+
+--------------------
+#include <sys/mount.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <mntent.h>
+
+// function to mount the entry on systemfs
+static inline int mount_entry_on_systemfs(struct mntent *mntent) {
+
+    // validate the input
+    if(mntent == NULL || mntent->mnt_dir == NULL) {
+        fprintf(stderr, "Error: invalid input\n");
+        return -1;
+    }
+
+    // check if the mount point already exists
+    struct mntent *existing_mnt;
+    FILE *mounts_file = setmntent("/etc/mtab", "r");
+    while((existing_mnt = getmntent(mounts_file)) != NULL) {
+        if(strcmp(existing_mnt->mnt_dir, mntent->mnt_dir) == 0) {
+            fprintf(stderr, "Error: mount point %s already exists\n", mntent->mnt_dir);
+            endmntent(mounts_file);
+            return -1;
+        }
+    }
+    endmntent(mounts_file);
+
+    // mount the entry on systemfs
+    int ret = mount_entry_on_generic(mntent, mntent->mnt_dir);
+    if(ret == -1) {
+        fprintf(stderr, "Error: failed to mount entry\n");
+        return -1;
+    }
+    return 0;
+}
+
+--------------------
+static inline int mount_entry_on_systemfs(struct mntent *mntent)
+{
+    return mount_entry_on_generic(mntent, mntent->mnt_dir);
+}
+
+--------------------
+static vpx_codec_err_t encoder_init(vpx_codec_ctx_t *ctx, vpx_codec_priv_enc_mr_cfg_t *data) {
+    vpx_codec_err_t ret = encoder_common_init(ctx);
+    return ret;
+}
+
+--------------------
+void vp8_default_coef_probs(VP8_COMMON *pc) {
+  memcpy(pc->fc.coef_probs, default_coef_probs, sizeof(default_coef_probs));
+}
+
+--------------------
+static int hns_xgmac_get_sset_count ( int stringset ) { 
+    // Fixes vulnerability where the function always returns ARRAY_SIZE ( g_xgmac_stats_string )
+    if ( stringset == ETH_SS_STATS )
+        return ARRAY_SIZE ( g_xgmac_stats_string ) ;
+    // Fixes vulnerability where the function returns 0 if the input is not ETH_SS_STATS 
+    else if (stringset == ETH_SS_PRIV_FLAGS)
+        return ARRAY_SIZE(g_xgmac_priv_flags);
+    else
+        return -EINVAL;
+}
+
+--------------------
+void recovery_delete_character(void) {
+  if (strlen(mnemonic) > 0) {
+    mnemonic[strlen(mnemonic)-1] = '\0';
+  }
+  next_character();
+}
+
+--------------------
+
+--------------------
+static char * pool_strdup(const char *s) {
+    char *r = pool_alloc(strlen(s) + 1);
+    if (r != NULL) {
+        strcpy(r, s);
+    }
+    return r;
+}
+
+--------------------
+struct crypto_template *crypto_lookup_template(const char *name) {
+    return try_then_request_module(__crypto_lookup_template(name), "%s", name);
+}
+
+--------------------

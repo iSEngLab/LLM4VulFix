@@ -18,6 +18,8 @@ tag_prompt = '''There are several vulnerabilities in the following program. In t
 multi_base_prompt = '''There are several vulnerabilities in the following program. Please try to fix these vulnerabilities, and return the complete code in the form of a markdown code block. Give me 5 possible fixed code\n\n'''
 multi_tag_prompt = '''There are several vulnerabilities in the following program. In this program, <S2SV_ModStart> represents where the vulnerability starts, and <S2SV_ModEnd> represents the place where the vulnerability ends. Please try to fix these vulnerabilities, and return the complete code without the above two special tags to me in the form of a markdown code block. Give me 5 possible fixed code\n\n'''
 new_multi_tag_prompt = '''You are an automated vulnerability repair tool. The following program contains some vulnerable lines (identified by <S2SV_StartBug> and <S2SV_EndBug> tags). Please provide ten possible correct code.\n'''
+
+
 def getdata(bug_path, fix_path):
     f1 = open(bug_path, 'r', encoding='utf-8')
     f2 = open(fix_path, 'r', encoding='utf-8')
@@ -53,6 +55,11 @@ def getdatawithtag(path):
     df.to_csv("cve_fixes_chat_tag.csv", encoding='utf-8')
 
 
+def extract_code_blocks(markdown):
+    code_blocks = re.findall(r'```[a-zA-Z]*\n([\s\S]*?)\n```', markdown)
+    return code_blocks
+
+
 def get_fix_from_gpt(query):
     success = False
     while not success:
@@ -68,22 +75,7 @@ def get_fix_from_gpt(query):
             print(e)
             continue
     response = completion['choices'][0]['message']['content']
-    flag = False
-    fixes = []
-    fix_code = ''
-    for res_line in response.split('\n'):
-        if not flag:
-            if res_line.startswith('```'):
-                flag = True
-            continue
-        else:
-            if res_line.startswith('```'):
-                flag = False
-                fixes.append(fix_code)
-                fix_code = ''
-                continue
-            fix_code += res_line
-            fix_code += '\n'
+    fixes = extract_code_blocks(response)
     return fixes
 
 
@@ -107,7 +99,7 @@ def run(datapath, start_idx=0, length=1697, epoch=0, prompt=base_prompt, name="b
         f3.write("outputs:\n")
         for output in outputs:
             f3.write(output + "\n")
-            f3.write("-"*20+"\n")
+            f3.write("-" * 20 + "\n")
             if re.sub(r'\s+', '', f) == re.sub(r'\s+', '', output):
                 flag = True
         if flag:

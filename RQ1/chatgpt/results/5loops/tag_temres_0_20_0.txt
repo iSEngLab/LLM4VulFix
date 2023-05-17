@@ -1,0 +1,144 @@
+#include <stdlib.h>
+
+tdata_t _TIFFmalloc (tsize_t s) {
+    return malloc(s);
+}
+
+--------------------
+
+--------------------
+void _modinit(module_t *m) {
+    // Bind command to ChanServ
+    service_named_bind_command("chanserv", &cs_flags);
+}
+
+--------------------
+
+--------------------
+static void ast_dealloc(AST_object* self) {
+    if (self != NULL) {
+        Py_CLEAR(self->dict);
+        Py_TYPE(self)->tp_free((PyObject*)self);
+    }
+}
+
+--------------------
+int file_is_y4m(const char detect[4]) {
+  if (memcmp(detect, "YUV4", 4) == 0) {
+    return 1;
+  }
+  else {
+    return 0;
+  }
+}
+
+--------------------
+static void mark_commit(struct commit* c, void* data) {
+    mark_object(&c->object, NULL, NULL, data);
+}
+
+--------------------
+static int sock_close(struct inode *inode, struct file *filp) {
+    sock_release(SOCKET_I(inode));
+    return 0;
+}
+
+--------------------
+static int sock_close(struct inode *inode, struct file *filp) {
+    sock_release(SOCKET_I(inode)); 
+    return 0;
+}
+
+--------------------
+int pure_strcmp(const char *const s1, const char *const s2) {
+    size_t s1_length = strlen(s1);
+    size_t s2_length = strlen(s2);
+
+    if (s1_length != s2_length) {
+        return s1_length - s2_length;
+    }
+
+    return memcmp(s1, s2, s1_length);
+}
+
+--------------------
+static char* print_string(cJSON* item) {
+    if(item->type != cJSON_String) {
+        return NULL; // handle error when item is not a string
+    }
+    return print_string_ptr(item->valuestring);
+}
+
+--------------------
+
+--------------------
+
+--------------------
+static vpx_codec_err_t encoder_init ( vpx_codec_ctx_t * ctx , vpx_codec_priv_enc_mr_cfg_t * data ) {
+    vpx_codec_err_t res = encoder_common_init ( ctx );
+    return res;
+}
+
+--------------------
+void vp8_default_coef_probs(VP8_COMMON* pc) {
+    const uint8_t* const default_coef_probs = get_default_coef_probs();
+    memcpy(pc->fc.coef_probs, default_coef_probs,
+           sizeof(pc->fc.coef_probs));
+}
+
+--------------------
+static int hns_xgmac_get_sset_count ( int stringset ) 
+{ 
+    if (stringset == ETH_SS_STATS) 
+        return ARRAY_SIZE ( g_xgmac_stats_string ) ; 
+    else 
+        return 0 ; 
+}
+
+--------------------
+void recovery_delete_character(void) {
+    if (strlen(mnemonic) > 0) {
+        mnemonic[strlen(mnemonic) - 1] = '\0';
+    }
+    next_character();
+}
+
+--------------------
+void generic_pipe_buf_get(struct pipe_inode_info *pipe, struct pipe_buffer *buf) {
+    struct page *page;
+    
+    page = buf->page;
+    get_page(page);
+}
+
+--------------------
+static char * pool_strdup(const char *s) {
+    if (s == NULL || *s == '\0') { // check for NULL or empty input string
+        return NULL;
+    }
+
+    size_t len = strlen(s);
+    char *r = pool_alloc(len + 1);
+    if (r == NULL) { // check for allocation failure
+        return NULL;
+    }
+
+    strncpy(r, s, len); // use strncpy to avoid buffer overflow
+    r[len] = '\0'; // null-terminate the string
+
+    return r;
+}
+
+--------------------
+struct crypto_template *crypto_lookup_template(const char *name) {
+    struct crypto_template *res;
+
+    res = __crypto_lookup_template(name);
+    if (!res)
+        request_module("crypto-template-%s", name);
+    res = __crypto_lookup_template(name);
+
+    return res;
+}
+
+--------------------

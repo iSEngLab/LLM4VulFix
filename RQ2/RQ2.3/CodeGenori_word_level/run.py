@@ -88,8 +88,8 @@ class InputFeatures(object):
         self.example_id = example_id
         self.inputs = inputs
         self.labels = labels
-        self.attn_mask = np.array(labels) != 1
-        self.loss_mask = np.array(labels) == 2
+        self.attn_mask = np.array(labels) != 12
+        self.loss_mask = np.array(labels) == 14
 
 
 def convert_examples_to_features(examples, tokenizer, args, stage=None):
@@ -106,15 +106,15 @@ def convert_examples_to_features(examples, tokenizer, args, stage=None):
             source = source[:-1]
         if stage == 'train':
             inputs = source + [10] + target + [11]
-            labels = [0] * len(source) + [2] * (len(target)+1) + [1]
+            labels = [13] * len(source) + [14] * (len(target)+1) + [12]
             assert len(inputs) <= block_size
             pad_len = block_size - len(inputs)
             inputs += [1] * pad_len
-            labels += [1] * pad_len
+            labels += [12] * pad_len
             assert len(inputs) == len(labels)
         else:
             inputs = source + [10]
-            labels = [0] * len(source) + [2]
+            labels = [13] * len(source) + [14]
         
         if example_index < 5:
             if stage=='train':
@@ -202,7 +202,17 @@ def eval_bleu(args, dev_dataset, model, device, tokenizer):
     xMatch = round(np.mean(accs)*100,4)
 
     return dev_bleu, xMatch
-
+def clean_tokens(tokens):
+    tokens = tokens.replace("[PAD]", "")
+    tokens = tokens.replace("[CLS]", "")
+    tokens = tokens.replace("[SEP]", "")
+    tokens = tokens.replace("[UNK]", "")
+    tokens = tokens.replace("[MASK]", "")
+    tokens = tokens.replace("<SOS>", "")
+    tokens = tokens.replace("<EOS>", "")
+    tokens = tokens.strip("\n")
+    tokens = tokens.strip()
+    return tokens
 
 def test(args, model, tokenizer, device, epoch=0):
     file = args.test_filename   
@@ -227,8 +237,8 @@ def test(args, model, tokenizer, device, epoch=0):
                 t=list(t)
                 if 0 in t:
                     t=t[:t.index(0)]
-                text = tokenizer.decode(t,clean_up_tokenization_spaces=False)
-                oriinput = tokenizer.decode(list(inputs[0].cpu().numpy()),clean_up_tokenization_spaces=False)
+                text = clean_tokens(tokenizer.decode(t))
+                oriinput = clean_tokens(tokenizer.decode(list(inputs[0].cpu().numpy())))
                 if text.startswith(oriinput):
                     text = text[len(oriinput):]
                 p.append(text)
@@ -352,7 +362,7 @@ def main():
     args.device = device
     # Set seed
     set_seed(args.seed)
-    tokenizer = Tokenizer.from_file('./wordlevel_tokenizer/wordlevel.json')
+    tokenizer = Tokenizer.from_file('./wordlevel_tokenizer/codegpt.json')
     #budild model
     decoder = AutoModelForCausalLM.from_pretrained("Salesforce/codegen-350M-multi")
     decoder.resize_token_embeddings(50267)

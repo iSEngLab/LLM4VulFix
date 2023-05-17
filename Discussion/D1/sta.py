@@ -11,7 +11,13 @@ def cwesta(path):
             cwe_tem =preds[i+1].split()[0]
             cwe.append(cwe_tem)
         if preds[i] == "match:":
-            match.append(int(preds[i + 1]))
+            if preds[i+1] =="0" or preds[i+1] == "1":
+                match.append(int(preds[i + 1]))
+            else:
+                if preds[i+1] == "False":
+                    match.append(0)
+                else:
+                    match.append(1)
     cwe_id = []
     success = []
     all = []
@@ -112,5 +118,6 @@ if __name__=="__main__":
     # cwestat("train")
     # cwestat("val")
     # cwestat("test")
-    cwelenstat()
+    # cwelenstat()
+    cwesta("ori/CodeGPT/CodeGPT_ori.txt")
 
