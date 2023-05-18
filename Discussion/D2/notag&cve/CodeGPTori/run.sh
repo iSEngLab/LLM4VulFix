@@ -14,7 +14,7 @@ python run.py \
         --output_dir ./24-Jan-2023/ \
         --max_source_length 512 \
         --max_target_length 512 \
-        --beam_size 5 \
+        --beam_size 50 \
         --train_batch_size 8 \
         --eval_batch_size 8 \
         --learning_rate 5e-5 \
@@ -32,7 +32,7 @@ python run.py \
          --output_dir ./24-Jan-2023/ \
          --max_source_length 512 \
          --max_target_length 512 \
-         --beam_size 5 \
+         --beam_size 50 \
          --train_batch_size 8 \
          --eval_batch_size 8 \
          --learning_rate 5e-5 \

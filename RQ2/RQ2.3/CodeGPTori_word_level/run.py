@@ -88,8 +88,8 @@ class InputFeatures(object):
         self.example_id = example_id
         self.inputs = inputs
         self.labels = labels
-        self.attn_mask = np.array(labels) != 12
-        self.loss_mask = np.array(labels) == 14
+        self.attn_mask = np.array(labels) != 0
+        self.loss_mask = np.array(labels) == 2
 
 
 def convert_examples_to_features(examples, tokenizer, args, stage=None):
@@ -105,16 +105,16 @@ def convert_examples_to_features(examples, tokenizer, args, stage=None):
         while len(source)+1 > args.max_source_length:
             source = source[:-1]
         if stage == 'train':
-            inputs = source + [10] + target + [11]
-            labels = [13] * len(source) + [14] * (len(target)+1) + [12]
+            inputs = source + [50257] + target + [50258]
+            labels = [1] * len(source) + [2] * (len(target)+1) + [0]
             assert len(inputs) <= block_size
             pad_len = block_size - len(inputs)
-            inputs += [1] * pad_len
-            labels += [12] * pad_len
+            inputs += [50259] * pad_len
+            labels += [0] * pad_len
             assert len(inputs) == len(labels)
         else:
-            inputs = source + [10]
-            labels = [13] * len(source) + [14]
+            inputs = source + [50257]
+            labels = [1] * len(source) + [2]
         
         if example_index < 5:
             if stage=='train':
@@ -203,13 +203,10 @@ def eval_bleu(args, dev_dataset, model, device, tokenizer):
 
     return dev_bleu, xMatch
 def clean_tokens(tokens):
-    tokens = tokens.replace("[PAD]", "")
-    tokens = tokens.replace("[CLS]", "")
-    tokens = tokens.replace("[SEP]", "")
+    tokens = tokens.replace("<pad>", "")
+    tokens = tokens.replace("<s>", "")
+    tokens = tokens.replace("</s>", "")
     tokens = tokens.replace("[UNK]", "")
-    tokens = tokens.replace("[MASK]", "")
-    tokens = tokens.replace("<SOS>", "")
-    tokens = tokens.replace("<EOS>", "")
     tokens = tokens.strip("\n")
     tokens = tokens.strip()
     return tokens
@@ -263,9 +260,9 @@ def test(args, model, tokenizer, device, epoch=0):
 
 
 def update_config(model, tokenizer):
-    model.config.bos_token_id = 10
-    model.config.eos_token_id = 11
-    model.config.pad_token_id = 1
+    model.config.bos_token_id = 50257
+    model.config.eos_token_id = 50258
+    model.config.pad_token_id = 50259
 
 
 def main():
@@ -367,11 +364,11 @@ def main():
     tokenizer = Tokenizer.from_file('./wordlevel_tokenizer/codegpt.json')
     #budild model
     decoder = model_class.from_pretrained(args.model_name_or_path)
-    decoder.resize_token_embeddings(50267)
+    decoder.resize_token_embeddings(50261)
     update_config(decoder, tokenizer)
     model=Seq2Seq(decoder=decoder,config=decoder.config,
                   beam_size=args.beam_size,max_length=args.max_target_length,
-                  sos_id=10,eos_id=11)
+                  sos_id=50257,eos_id=50258)
     if args.load_model_path is not None:
         logger.info("reload model from {}".format(args.load_model_path))
         model.load_state_dict(torch.load(args.load_model_path))

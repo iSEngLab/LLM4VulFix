@@ -70,8 +70,8 @@ def read_examples(filename, fine_tune_factor):
     src_filename = filename.split(',')[0]
     trg_filename = filename.split(',')[1]
     idx = 0
-    source = open(src_filename, 'r').readlines()
-    target = open(trg_filename, 'r').readlines()
+    source = open(src_filename, 'r', encoding='utf-8').readlines()
+    target = open(trg_filename, 'r', encoding='utf-8').readlines()
     length = len(source)
     if "train" in filename:
         source = source[:int(length * fine_tune_factor)]
@@ -171,7 +171,7 @@ def eval_bleu(args, dev_dataset, model, device, tokenizer):
     if 'dev_bleu' in dev_dataset:
         eval_examples, eval_data = dev_dataset['dev_bleu']
     else:
-        eval_examples = read_examples(args.dev_filename,args.fine_tune_factor)
+        eval_examples = read_examples(args.dev_filename, args.fine_tune_factor)
         eval_examples = random.sample(eval_examples, min(1000, len(eval_examples)))
         eval_features = convert_examples_to_features(eval_examples, tokenizer, args, stage='test')
         eval_data = TextDataset(eval_features, args)
@@ -216,7 +216,7 @@ def eval_bleu(args, dev_dataset, model, device, tokenizer):
 def test(args, model, tokenizer, device, epoch=0):
     file = args.test_filename
     logger.info("Test file: {}".format(file))
-    eval_examples = read_examples(file,args.fine_tune_factor)
+    eval_examples = read_examples(file, args.fine_tune_factor)
     eval_features = convert_examples_to_features(eval_examples, tokenizer, args, stage='test')
     eval_data = TextDataset(eval_features, args)
 
@@ -400,7 +400,7 @@ def main():
 
     if args.do_train:
         # Prepare training data loader
-        train_examples = read_examples(args.train_filename,args.fine_tune_factor)
+        train_examples = read_examples(args.train_filename, args.fine_tune_factor)
         train_features = convert_examples_to_features(train_examples, tokenizer, args, stage='train')
         train_data = TextDataset(train_features, args)
 
@@ -470,7 +470,7 @@ def main():
                 if 'dev_loss' in dev_dataset:
                     eval_examples, eval_data = dev_dataset['dev_loss']
                 else:
-                    eval_examples = read_examples(args.dev_filename,args.fine_tune_factor)
+                    eval_examples = read_examples(args.dev_filename, args.fine_tune_factor)
                     eval_features = convert_examples_to_features(eval_examples, tokenizer, args, stage='train')
                     eval_data = TextDataset(eval_features, args)
                     dev_dataset['dev_loss'] = eval_examples, eval_data
@@ -555,4 +555,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    read_examples(
+        "../data/fine_tune_data/gptdata/buggy_methods_val_ori.txt,../data/fine_tune_data/gptdata/fixed_methods_val_ori.txt",
+        0.2)

@@ -16,8 +16,8 @@ openai.api_key = ''
 base_prompt = '''There are several vulnerabilities in the following program. Please try to fix these vulnerabilities, and return the complete code in the form of a markdown code block\n\n'''
 tag_prompt = '''There are several vulnerabilities in the following program. In this program, <S2SV_ModStart> represents where the vulnerability starts, and <S2SV_ModEnd> represents the place where the vulnerability ends. Please try to fix these vulnerabilities, and return the complete code without the above two special tags to me in the form of a markdown code block\n\n'''
 multi_base_prompt = '''There are several vulnerabilities in the following program. Please try to fix these vulnerabilities, and return the complete code in the form of a markdown code block. Give me 5 possible fixed code\n\n'''
-multi_tag_prompt = '''There are several vulnerabilities in the following program. In this program, <S2SV_ModStart> represents where the vulnerability starts, and <S2SV_ModEnd> represents the place where the vulnerability ends. Please try to fix these vulnerabilities, and return the complete code without the above two special tags to me in the form of a markdown code block. Give me 5 possible fixed code\n\n'''
-new_multi_tag_prompt = '''You are an automated vulnerability repair tool. The following program contains some vulnerable lines (identified by <S2SV_StartBug> and <S2SV_EndBug> tags). Please provide ten possible correct code.\n'''
+multi_tag_prompt = '''There are several vulnerabilities in the following program. In this program, <S2SV_ModStart> represents where the vulnerability starts, and <S2SV_ModEnd> represents the place where the vulnerability ends. Please try to fix these vulnerabilities, and return the complete code without the above two special tags to me in the form of a markdown code block. Give me 10 possible fixed code\n\n'''
+new_multi_tag_prompt = '''You are an automated vulnerability repair tools. The following contains some vulnerable lines (identified by <S2SV_StartBug> and <S2SV_EndBug> tags). Please provide ten possible correct code. Please separate the ten pieces of code into different code blocks in markdown format\n'''
 
 
 def getdata(bug_path, fix_path):
@@ -86,6 +86,9 @@ def run(datapath, start_idx=0, length=1697, epoch=0, prompt=base_prompt, name="b
     accu = []
     f3 = open("./results/{}_res_{}_{}_{}.txt".format(name, start_idx, length, epoch), 'a', encoding='utf-8')
     bugfix_pair = [[s, t] for s, t in zip(source, target)]
+    directory = './results/run{}'.format(name)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
     for pair in tqdm.tqdm(bugfix_pair[start_idx:start_idx + length]):
         b = pair[0]
         f = pair[1]
@@ -111,6 +114,92 @@ def run(datapath, start_idx=0, length=1697, epoch=0, prompt=base_prompt, name="b
     print(round(sum(accu) / len(accu), 4))
 
 
+def get_fix_from_gpt_compensate(query, path):
+    success = False
+    while not success:
+        try:
+            completion = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "user", "content": query}
+                ]
+            )
+            success = True
+        except Exception as e:
+            print(e)
+            continue
+    response = completion['choices'][0]['message']['content']
+    f = open(path, 'w')
+    f.write(response)
+    f.close()
+    fixes = extract_code_blocks(response)
+    return fixes
+
+def get_source(target_path):
+    f = open(target_path, 'r')
+    targets = f.read().splitlines()
+    sources = []
+    df = pd.read_csv("cve_fixes_chat_tag.csv", encoding='utf-8')
+    full_source = df['source'].tolist()
+    full_target = df['target'].tolist()
+    for i in range(len(full_target)):
+        t = full_target[i].strip()
+        if t in targets:
+            sources.append(full_source[i])
+    sources = [s.strip() for s in sources]
+    f2 = open("null_source.txt", 'w')
+    for s in sources:
+        f2.write(s + "\n")
+    f2.close()
+def compensate(date):
+    f1 = open("null_source.txt",'r')
+    f2 = open("null_target.txt",'r')
+    sources = f1.readlines()
+    targets = f2.readlines()
+    directory = './results/compensate{}'.format(date)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    f3 = open("./results/compensate.txt",'a',encoding='utf-8')
+    accu = []
+    for i in tqdm.tqdm(range(len(sources))):
+        b = sources[i]
+        f = targets[i]
+        path = directory+"/{}.txt".format(i)
+        f3.write("source:\n")
+        f3.write(b + '\n')
+        f3.write("target:\n")
+        f3.write(f + '\n')
+        query = new_multi_tag_prompt + b
+        outputs = get_fix_from_gpt_compensate(query,path)
+        flag = False
+        f3.write("outputs:\n")
+        for output in outputs:
+            f3.write(output + "\n")
+            f3.write("-" * 20 + "\n")
+            if re.sub(r'\s+', '', f) == re.sub(r'\s+', '', output):
+                flag = True
+        if flag:
+            accu.append(1)
+            f3.write("match:1\n")
+        else:
+            accu.append(0)
+            f3.write("match:0\n")
+    f3.close()
+    print(round(sum(accu) / len(accu), 4))
+
+def extractCompensate():
+    f_res = open("./results/compensate.txt",'a',encoding='utf-8')
+    for i in range(58):
+        f_c_single = open("./results/compensate0518/{}.txt".format(i),'r',encoding='utf-8')
+        content = f_c_single.read()
+        outputs = []
+        if "```" in content:
+            content.replace("```c","```")
+            outputs += extract_code_blocks(content)
+            continue
+
+
+
 if __name__ == '__main__':
     # getdata("buggy_methods_test.txt", 'fixed_methods_test.txt')
     # getdatawithtag("cve_fixes_test_gpt.csv")
@@ -120,3 +209,4 @@ if __name__ == '__main__':
     #     run("cve_fixes_chat_tag.csv", prompt=tag_prompt, length=20, epoch=i, name="tag")
     # run("cve_fixes_chat.csv", prompt=multi_base_prompt, length=20, name="base")
     run("cve_fixes_chat_tag.csv", prompt=new_multi_tag_prompt, length=100, name="newtag")
+    # compensate("0518_2")
