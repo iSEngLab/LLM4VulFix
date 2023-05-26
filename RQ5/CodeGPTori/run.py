@@ -249,7 +249,7 @@ def test(args, model, tokenizer, device, epoch=0):
                 break
         accs.append(flag)
     xMatch = round(np.mean(accs) * 100, 4)
-    with open(os.path.join(args.output_dir, "test_{}.output".format(xMatch)), 'w') as f:
+    with open(os.path.join(args.output_dir, "test_{}_{}.output".format(args.model_name, xMatch)), 'w') as f:
         for ref, gold, a in zip(p, eval_examples, accs):
             f.write("source:\n" + gold.source + "\n")
             f.write("target:\n" + gold.target + "\n")
@@ -274,6 +274,8 @@ def main():
     parser.add_argument("--model_type", default=None, type=str, required=True,
                         help="Model type: e.g. roberta")
     parser.add_argument("--model_name_or_path", default=None, type=str, required=True,
+                        help="Path to pre-trained model: e.g. roberta-base")
+    parser.add_argument("--model_name", default=None, type=str, required=True,
                         help="Path to pre-trained model: e.g. roberta-base")
     parser.add_argument("--output_dir", default=None, type=str, required=True,
                         help="The output directory where the model predictions and checkpoints will be written.")
@@ -363,13 +365,12 @@ def main():
     set_seed(args.seed)
 
     config_class, model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
-    config = GPT2Config.from_pretrained("microsoft/CodeGPT-small-java-adaptedGPT2")
     tokenizer = tokenizer_class.from_pretrained(args.model_name_or_path, do_lower_case=args.do_lower_case, \
                                                 bos_token='<s>', eos_token='</s>', pad_token='<pad>',
                                                 unk_token='<|UNKNOWN|>', sep_token='concode_elem_sep')
     tokenizer.add_tokens(["<S2SV_StartBug>", "<S2SV_EndBug>", "<S2SV_blank>", "<S2SV_ModStart>", "<S2SV_ModEnd>"])
     # budild model
-    decoder = model_class(config)
+    decoder = model_class.from_pretrained(args.model_name_or_path)
     decoder.resize_token_embeddings(len(tokenizer))
     update_config(decoder, tokenizer)
     model = Seq2Seq(decoder=decoder, config=decoder.config,
@@ -504,12 +505,12 @@ def main():
                 logger.info("  " + "*" * 20)
 
                 # save last checkpoint
-                last_output_dir = os.path.join(args.output_dir, 'checkpoint-last')
-                if not os.path.exists(last_output_dir):
-                    os.makedirs(last_output_dir)
-                model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
-                output_model_file = os.path.join(last_output_dir, "pytorch_model.bin")
-                torch.save(model_to_save.state_dict(), output_model_file)
+                # last_output_dir = os.path.join(args.output_dir, 'checkpoint-last')
+                # if not os.path.exists(last_output_dir):
+                #     os.makedirs(last_output_dir)
+                # model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
+                # output_model_file = os.path.join(last_output_dir, "pytorch_model.bin")
+                # torch.save(model_to_save.state_dict(), output_model_file)
                 if eval_loss < best_loss:
                     logger.info("  Best ppl:%s", round(np.exp(eval_loss), 5))
                     logger.info("  " + "*" * 20)
@@ -520,7 +521,7 @@ def main():
                     if not os.path.exists(output_dir):
                         os.makedirs(output_dir)
                     model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
-                    output_model_file = os.path.join(output_dir, "pytorch_model.bin")
+                    output_model_file = os.path.join(output_dir, "{}.bin".format(args.model_name))
                     torch.save(model_to_save.state_dict(), output_model_file)
                 else:
                     not_loss_dec_cnt += 1

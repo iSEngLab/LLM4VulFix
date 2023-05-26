@@ -232,34 +232,37 @@ def test(args, model, tokenizer, device, epoch=0):
         with torch.no_grad():
             preds = model(inputs=inputs, labels=labels, attn_mask=attn_mask, loss_mask=loss_mask, pred=True)
             for pred in preds:
-                t = pred[0].cpu().numpy()
-                t = list(t)
-                if 0 in t:
-                    t = t[:t.index(0)]
-                text = tokenizer.decode(t, clean_up_tokenization_spaces=False)
-                oriinput = tokenizer.decode(list(inputs[0].cpu().numpy()), clean_up_tokenization_spaces=False)
-                if text.startswith(oriinput):
-                    text = text[len(oriinput):]
-                p.append(text)
+                beam_texts = []
+                for i in range(args.beam_size):
+                    t = pred[i].cpu().numpy()
+                    t = list(t)
+                    if 0 in t:
+                        t = t[:t.index(0)]
+                    text = tokenizer.decode(t, clean_up_tokenization_spaces=False)
+                    oriinput = tokenizer.decode(list(inputs[0].cpu().numpy()), clean_up_tokenization_spaces=False)
+                    if text.startswith(oriinput):
+                        text = text[len(oriinput):]
+                    beam_texts.append(text)
+                p.append(beam_texts)
     model.train()
-    predictions = []
     accs = []
     for ref, gold in zip(p, eval_examples):
-        accs.append(ref == gold.target)
+        flag = False
+        for beam in ref:
+            if beam == gold.target:
+                flag = True
+                break
+        accs.append(flag)
     xMatch = round(np.mean(accs) * 100, 4)
-    with open(os.path.join(args.output_dir, "test_{}_{}.output".format(args.fine_tune_factor, xMatch)), 'w') as f, \
-            open(os.path.join(args.output_dir, "test_{}_{}.gold".format(args.fine_tune_factor, xMatch)), 'w') as f1:
-        for ref, gold in zip(p, eval_examples):
-            predictions.append(str(gold.idx) + '\t' + ref)
-            f.write(str(gold.idx) + '\t' + ref + '\n')
-            f1.write(str(gold.idx) + '\t' + gold.target + '\n')
-
-    (goldMap, predictionMap) = bleu.computeMaps(predictions, os.path.join(args.output_dir, \
-                                                                          "test_{}_{}.gold".format(
-                                                                              args.fine_tune_factor, xMatch)))
-    dev_bleu = round(bleu.bleuFromMaps(goldMap, predictionMap)[0], 2)
-
-    logger.info("  %s = %s, %s = %s" % ("bleu-4", str(dev_bleu), "xMatch", str(xMatch)))
+    with open(os.path.join(args.output_dir, "test_{}_{}.output".format(args.fine_tune_factor,xMatch)), 'w') as f:
+        for ref, gold, a in zip(p, eval_examples, accs):
+            f.write("source:\n" + gold.source + "\n")
+            f.write("target:\n" + gold.target + "\n")
+            f.write("match:\n" + str(a) + "\n")
+            f.write("raw_predictions:\n")
+            for i in ref:
+                f.write(i + "\n")
+    logger.info("   %s = %s" % ("xMatch", str(xMatch)))
     logger.info("  " + "*" * 20)
 
 

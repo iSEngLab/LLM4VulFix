@@ -1954,7 +1954,7 @@ def is_utf8(s):
         return False
 
 def toTxt(path,name=None):
-    type = path.split("_")[2]
+    type = path.split("_")[1]
     if type == "val":
         type = "valid"
     df = pd.read_csv(path, encoding='utf-8')
@@ -2036,5 +2036,7 @@ if __name__ == "__main__":
     # toTxt("cve_fixes_val_diff.csv", name="diff")
     # toTxt("cve_fixes_test_diff.csv", name="diff")
     # toTxt("cve_fixes_train_prompt.csv",name="prompt")
-    toTxt("cve_fixes_val_prompt.csv", name="prompt")
-    toTxt("cve_fixes_test_prompt.csv", name="prompt")
+    # toTxt("cve_fixes_val_prompt.csv", name="prompt")
+    # toTxt("cve_fixes_test_prompt.csv", name="prompt")
+    toTxt("bugfix_train.csv",name="trans")
+    toTxt("bugfix_val.csv", name="trans")

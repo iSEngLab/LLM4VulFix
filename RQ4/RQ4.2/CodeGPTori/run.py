@@ -35,52 +35,57 @@ from itertools import cycle
 import torch.nn as nn
 from model import Seq2Seq
 from tqdm import tqdm, trange
-from torch.utils.data import DataLoader, Dataset, SequentialSampler, RandomSampler,TensorDataset
+from torch.utils.data import DataLoader, Dataset, SequentialSampler, RandomSampler, TensorDataset
 from torch.utils.data.distributed import DistributedSampler
 from transformers import (WEIGHTS_NAME, AdamW, get_linear_schedule_with_warmup,
                           RobertaConfig, RobertaModel, RobertaTokenizer,
                           GPT2Config, GPT2LMHeadModel, GPT2Tokenizer)
+
 MODEL_CLASSES = {
     'roberta': (RobertaConfig, RobertaModel, RobertaTokenizer),
     'gpt2': (GPT2Config, GPT2LMHeadModel, GPT2Tokenizer),
 }
 
 logging.basicConfig(
-    format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
-    datefmt = '%m/%d/%Y %H:%M:%S',
-    level = logging.INFO
+    format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
+    datefmt='%m/%d/%Y %H:%M:%S',
+    level=logging.INFO
 )
 logger = logging.getLogger(__name__)
 
+
 class Example(object):
     """A single training/test example."""
+
     def __init__(self, idx, source, target):
         self.idx = idx
         self.source = source
         self.target = target
 
+
 def read_examples(filename):
     """Read examples from filename."""
-    examples=[]
-    assert len(filename.split(','))==2
+    examples = []
+    assert len(filename.split(',')) == 2
     src_filename = filename.split(',')[0]
     trg_filename = filename.split(',')[1]
     idx = 0
-    with open(src_filename) as f1,open(trg_filename) as f2:
-            for line1,line2 in zip(f1,f2):
-                examples.append(
+    with open(src_filename) as f1, open(trg_filename) as f2:
+        for line1, line2 in zip(f1, f2):
+            examples.append(
                 Example(
-                        idx = idx,
-                        source=line1.strip(),
-                        target=line2.strip(),
-                        ) 
+                    idx=idx,
+                    source=line1.strip(),
+                    target=line2.strip(),
                 )
-                idx+=1
+            )
+            idx += 1
     return examples
 
 
 class InputFeatures(object):
     """A single training/test features for a example."""
+
     def __init__(self, example_id, inputs, labels):
         self.example_id = example_id
         self.inputs = inputs
@@ -97,13 +102,13 @@ def convert_examples_to_features(examples, tokenizer, args, stage=None):
         target = tokenizer.encode(example.target)
         if stage == 'test':
             target = []
-        while len(target)+1 > args.max_target_length:
+        while len(target) + 1 > args.max_target_length:
             target = target[:-1]
-        while len(source)+1 > args.max_source_length:
+        while len(source) + 1 > args.max_source_length:
             source = source[:-1]
         if stage == 'train':
             inputs = source + [tokenizer.bos_token_id] + target + [tokenizer.eos_token_id]
-            labels = [1] * len(source) + [2] * (len(target)+1) + [0]
+            labels = [1] * len(source) + [2] * (len(target) + 1) + [0]
             assert len(inputs) <= block_size
             pad_len = block_size - len(inputs)
             inputs += [tokenizer.pad_token_id] * pad_len
@@ -112,9 +117,9 @@ def convert_examples_to_features(examples, tokenizer, args, stage=None):
         else:
             inputs = source + [tokenizer.bos_token_id]
             labels = [1] * len(source) + [2]
-        
+
         if example_index < 5:
-            if stage=='train':
+            if stage == 'train':
                 logger.info("*** Example ***")
                 logger.info("idx: {}".format(example.idx))
 
@@ -122,29 +127,30 @@ def convert_examples_to_features(examples, tokenizer, args, stage=None):
                 logger.info("target: {}".format(example.target))
                 logger.info("inputs: {}".format(' '.join(map(str, inputs))))
                 logger.info("labels: {}".format(' '.join(map(str, labels))))
-        
-        
+
         features.append(
             InputFeatures(
-                 example_index,
-                 inputs,
-                 labels,
+                example_index,
+                inputs,
+                labels,
             )
         )
     return features
 
+
 class TextDataset(Dataset):
     def __init__(self, examples, args):
         self.examples = examples
-        self.args=args  
-        
+        self.args = args
+
     def __len__(self):
         return len(self.examples)
-    
+
     def __getitem__(self, item):
         return torch.tensor(self.examples[item].inputs), torch.tensor(self.examples[item].labels), \
                torch.tensor(self.examples[item].attn_mask, dtype=torch.uint8), \
                torch.tensor(self.examples[item].loss_mask, dtype=torch.uint8)
+
 
 def set_seed(seed=42):
     random.seed(seed)
@@ -154,71 +160,72 @@ def set_seed(seed=42):
     torch.cuda.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
 
+
 def eval_bleu(args, dev_dataset, model, device, tokenizer):
-    #Calculate bleu  
+    # Calculate bleu
     if 'dev_bleu' in dev_dataset:
-        eval_examples,eval_data=dev_dataset['dev_bleu']
+        eval_examples, eval_data = dev_dataset['dev_bleu']
     else:
         eval_examples = read_examples(args.dev_filename)
-        eval_examples = random.sample(eval_examples,min(1000,len(eval_examples)))
+        eval_examples = random.sample(eval_examples, min(1000, len(eval_examples)))
         eval_features = convert_examples_to_features(eval_examples, tokenizer, args, stage='test')
-        eval_data = TextDataset(eval_features,args)  
-        dev_dataset['dev_bleu']=eval_examples,eval_data
+        eval_data = TextDataset(eval_features, args)
+        dev_dataset['dev_bleu'] = eval_examples, eval_data
 
     eval_sampler = SequentialSampler(eval_data)
     eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=1)
 
-    model.eval() 
-    p=[]
-    for batch in tqdm(eval_dataloader,total=len(eval_dataloader)):
+    model.eval()
+    p = []
+    for batch in tqdm(eval_dataloader, total=len(eval_dataloader)):
         batch = tuple(t.to(device) for t in batch)
-        inputs, labels, attn_mask, loss_mask = batch                  
+        inputs, labels, attn_mask, loss_mask = batch
         with torch.no_grad():
-            preds = model(inputs=inputs, labels=labels, attn_mask=attn_mask, loss_mask=loss_mask, pred=True)  
+            preds = model(inputs=inputs, labels=labels, attn_mask=attn_mask, loss_mask=loss_mask, pred=True)
             for pred in preds:
-                t=pred[0].cpu().numpy()
-                t=list(t)
+                t = pred[0].cpu().numpy()
+                t = list(t)
                 if 0 in t:
-                    t=t[:t.index(0)]
-                text = tokenizer.decode(t,clean_up_tokenization_spaces=False)
+                    t = t[:t.index(0)]
+                text = tokenizer.decode(t, clean_up_tokenization_spaces=False)
                 p.append(text)
     model.train()
-    predictions=[]
-    accs=[]
-    with open(os.path.join(args.output_dir,"dev.output"),'w') as f, \
-        open(os.path.join(args.output_dir,"dev.gold"),'w') as f1:
-        for ref,gold in zip(p,eval_examples):
-            predictions.append(str(gold.idx)+'\t'+ref)
-            f.write(str(gold.idx)+'\t'+ref+'\n')
-            f1.write(str(gold.idx)+'\t'+gold.target+'\n')
-            accs.append(ref==gold.target)     
+    predictions = []
+    accs = []
+    with open(os.path.join(args.output_dir, "dev.output"), 'w') as f, \
+            open(os.path.join(args.output_dir, "dev.gold"), 'w') as f1:
+        for ref, gold in zip(p, eval_examples):
+            predictions.append(str(gold.idx) + '\t' + ref)
+            f.write(str(gold.idx) + '\t' + ref + '\n')
+            f1.write(str(gold.idx) + '\t' + gold.target + '\n')
+            accs.append(ref == gold.target)
 
     (goldMap, predictionMap) = bleu.computeMaps(predictions, \
-        os.path.join(args.output_dir, "dev.gold")) 
-    dev_bleu=round(bleu.bleuFromMaps(goldMap, predictionMap)[0],2)
-    xMatch = round(np.mean(accs)*100,4)
+                                                os.path.join(args.output_dir, "dev.gold"))
+    dev_bleu = round(bleu.bleuFromMaps(goldMap, predictionMap)[0], 2)
+    xMatch = round(np.mean(accs) * 100, 4)
 
     return dev_bleu, xMatch
 
 
 def test(args, model, tokenizer, device, epoch=0):
-    file = args.test_filename   
+    file = args.test_filename
     logger.info("Test file: {}".format(file))
     eval_examples = read_examples(file)
-    eval_features = convert_examples_to_features(eval_examples, tokenizer, args,stage='test')
-    eval_data = TextDataset(eval_features,args)  
+    eval_features = convert_examples_to_features(eval_examples, tokenizer, args, stage='test')
+    eval_data = TextDataset(eval_features, args)
 
     # Calculate bleu
     eval_sampler = SequentialSampler(eval_data)
     eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=1)
 
-    model.eval() 
-    p=[]
-    for batch in tqdm(eval_dataloader,total=len(eval_dataloader)):
+    model.eval()
+    p = []
+    for batch in tqdm(eval_dataloader, total=len(eval_dataloader)):
         batch = tuple(t.to(device) for t in batch)
         inputs, labels, attn_mask, loss_mask = batch
         with torch.no_grad():
-            preds = model(inputs=inputs, labels=labels, attn_mask=attn_mask, loss_mask=loss_mask, pred=True)  
+            preds = model(inputs=inputs, labels=labels, attn_mask=attn_mask, loss_mask=loss_mask, pred=True)
             for pred in preds:
                 beam_texts = []
                 for i in range(args.beam_size):
@@ -238,19 +245,19 @@ def test(args, model, tokenizer, device, epoch=0):
         flag = False
         for beam in ref:
             if beam == gold.target:
-                flag=True
+                flag = True
                 break
         accs.append(flag)
     xMatch = round(np.mean(accs) * 100, 4)
     with open(os.path.join(args.output_dir, "test_{}_{}.output".format(args.beam_size, xMatch)), 'w') as f:
-        for ref, gold,a in zip(p, eval_examples,accs):
+        for ref, gold, a in zip(p, eval_examples, accs):
             f.write("source:\n" + gold.source + "\n")
             f.write("target:\n" + gold.target + "\n")
             f.write("match:\n" + str(a) + "\n")
             f.write("raw_predictions:\n")
             for i in ref:
                 f.write(i + "\n")
-    logger.info("   %s = %s" % ( "xMatch", str(xMatch)))
+    logger.info("   %s = %s" % ("xMatch", str(xMatch)))
     logger.info("  " + "*" * 20)
 
 
@@ -267,30 +274,30 @@ def main():
     parser.add_argument("--model_type", default=None, type=str, required=True,
                         help="Model type: e.g. roberta")
     parser.add_argument("--model_name_or_path", default=None, type=str, required=True,
-                        help="Path to pre-trained model: e.g. roberta-base" )   
+                        help="Path to pre-trained model: e.g. roberta-base")
     parser.add_argument("--output_dir", default=None, type=str, required=True,
                         help="The output directory where the model predictions and checkpoints will be written.")
-    parser.add_argument("--load_model_path", default=None, type=str, 
-                        help="Path to trained model: Should contain the .bin files" )    
+    parser.add_argument("--load_model_path", default=None, type=str,
+                        help="Path to trained model: Should contain the .bin files")
     ## Other parameters
-    parser.add_argument("--train_filename", default=None, type=str, 
+    parser.add_argument("--train_filename", default=None, type=str,
                         help="The train filename. Should contain the .jsonl files for this task.")
-    parser.add_argument("--dev_filename", default=None, type=str, 
+    parser.add_argument("--dev_filename", default=None, type=str,
                         help="The dev filename. Should contain the .jsonl files for this task.")
-    parser.add_argument("--test_filename", default=None, type=str, 
-                        help="The test filename. Should contain the .jsonl files for this task.")  
-    
+    parser.add_argument("--test_filename", default=None, type=str,
+                        help="The test filename. Should contain the .jsonl files for this task.")
+
     parser.add_argument("--config_name", default="", type=str,
                         help="Pretrained config name or path if not the same as model_name")
     parser.add_argument("--tokenizer_name", default="", type=str,
-                        help="Pretrained tokenizer name or path if not the same as model_name") 
+                        help="Pretrained tokenizer name or path if not the same as model_name")
     parser.add_argument("--max_source_length", default=64, type=int,
                         help="The maximum total source sequence length after tokenization. Sequences longer "
                              "than this will be truncated, sequences shorter will be padded.")
     parser.add_argument("--max_target_length", default=32, type=int,
                         help="The maximum total target sequence length after tokenization. Sequences longer "
                              "than this will be truncated, sequences shorter will be padded.")
-    
+
     parser.add_argument("--do_train", action='store_true',
                         help="Whether to run training.")
     parser.add_argument("--do_eval", action='store_true',
@@ -300,8 +307,8 @@ def main():
     parser.add_argument("--do_lower_case", action='store_true',
                         help="Set this flag if you are using an uncased model.")
     parser.add_argument("--no_cuda", action='store_true',
-                        help="Avoid using CUDA when available") 
-    
+                        help="Avoid using CUDA when available")
+
     parser.add_argument("--train_batch_size", default=8, type=int,
                         help="Batch size per GPU/CPU for training.")
     parser.add_argument("--patience", default=5, type=int)
@@ -312,7 +319,7 @@ def main():
     parser.add_argument("--learning_rate", default=5e-5, type=float,
                         help="The initial learning rate for Adam.")
     parser.add_argument("--beam_size", default=10, type=int,
-                        help="beam size for beam search")    
+                        help="beam size for beam search")
     parser.add_argument("--weight_decay", default=0.0, type=float,
                         help="Weight deay if we apply some.")
     parser.add_argument("--adam_epsilon", default=1e-8, type=float,
@@ -330,7 +337,7 @@ def main():
     parser.add_argument("--warmup_steps", default=0, type=int,
                         help="Linear warmup over warmup_steps.")
     parser.add_argument("--local_rank", type=int, default=-1,
-                        help="For distributed training: local_rank")   
+                        help="For distributed training: local_rank")
     parser.add_argument('--seed', type=int, default=42,
                         help="random seed for initialization")
     # print arguments
@@ -338,8 +345,8 @@ def main():
     # make dir if output_dir not exist
     if os.path.exists(args.output_dir) is False:
         os.makedirs(args.output_dir)
-    logger.info(args)   
-        
+    logger.info(args)
+
     # Setup CUDA, GPU & distributed training
     if args.local_rank == -1 or args.no_cuda:
         device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
@@ -350,55 +357,57 @@ def main():
         torch.distributed.init_process_group(backend='nccl')
         args.n_gpu = 1
     logger.warning("Process rank: %s, device: %s, n_gpu: %s, distributed training: %s",
-                    args.local_rank, device, args.n_gpu, bool(args.local_rank != -1))
+                   args.local_rank, device, args.n_gpu, bool(args.local_rank != -1))
     args.device = device
     # Set seed
     set_seed(args.seed)
-        
+
     config_class, model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
     tokenizer = tokenizer_class.from_pretrained(args.model_name_or_path, do_lower_case=args.do_lower_case, \
-        bos_token='<s>', eos_token='</s>', pad_token='<pad>', unk_token='<|UNKNOWN|>', sep_token='concode_elem_sep')
+                                                bos_token='<s>', eos_token='</s>', pad_token='<pad>',
+                                                unk_token='<|UNKNOWN|>', sep_token='concode_elem_sep')
     tokenizer.add_tokens(["<S2SV_StartBug>", "<S2SV_EndBug>", "<S2SV_blank>", "<S2SV_ModStart>", "<S2SV_ModEnd>"])
-    #budild model
+    # budild model
     decoder = model_class.from_pretrained(args.model_name_or_path)
-    decoder.resize_token_embeddings(len(tokenizer))    
+    decoder.resize_token_embeddings(len(tokenizer))
     update_config(decoder, tokenizer)
-    model=Seq2Seq(decoder=decoder,config=decoder.config,
-                  beam_size=args.beam_size,max_length=args.max_target_length,
-                  sos_id=tokenizer.bos_token_id,eos_id=tokenizer.eos_token_id)
+    model = Seq2Seq(decoder=decoder, config=decoder.config,
+                    beam_size=args.beam_size, max_length=args.max_target_length,
+                    sos_id=tokenizer.bos_token_id, eos_id=tokenizer.eos_token_id)
     if args.load_model_path is not None:
         logger.info("reload model from {}".format(args.load_model_path))
         model.load_state_dict(torch.load(args.load_model_path))
-        
+
     model.to(device)
     if args.local_rank != -1:
         # Distributed training
         try:
             from apex.parallel import DistributedDataParallel as DDP
         except ImportError:
-            raise ImportError("Please install apex from https://www.github.com/nvidia/apex to use distributed and fp16 training.")
+            raise ImportError(
+                "Please install apex from https://www.github.com/nvidia/apex to use distributed and fp16 training.")
 
         model = DDP(model)
     elif args.n_gpu > 1:
         # multi-gpu training
         model = torch.nn.DataParallel(model)
-    
+
     fa = open(os.path.join(args.output_dir, 'summary.log'), 'a+')
-    
+
     if args.do_train:
         # Prepare training data loader
         train_examples = read_examples(args.train_filename)
-        train_features = convert_examples_to_features(train_examples, tokenizer,args,stage='train')
-        train_data = TextDataset(train_features,args)
+        train_features = convert_examples_to_features(train_examples, tokenizer, args, stage='train')
+        train_data = TextDataset(train_features, args)
 
         if args.local_rank == -1:
             train_sampler = RandomSampler(train_data)
         else:
             train_sampler = DistributedSampler(train_data)
         train_dataloader = DataLoader(train_data, sampler=train_sampler, \
-            batch_size=args.train_batch_size//args.gradient_accumulation_steps)
+                                      batch_size=args.train_batch_size // args.gradient_accumulation_steps)
 
-        num_train_optimization_steps =  args.train_steps
+        num_train_optimization_steps = args.train_steps
 
         # Prepare optimizer and schedule (linear warmup and decay)
         no_decay = ['bias', 'LayerNorm.weight']
@@ -410,58 +419,57 @@ def main():
         t_total = len(train_dataloader) // args.gradient_accumulation_steps * args.num_train_epochs
         optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
         scheduler = get_linear_schedule_with_warmup(optimizer,
-                                                    num_warmup_steps=int(t_total*0.1),
+                                                    num_warmup_steps=int(t_total * 0.1),
                                                     num_training_steps=t_total)
-    
-        #Start training
+
+        # Start training
         logger.info("***** Running training *****")
         logger.info("  Num examples = %d", len(train_examples))
         logger.info("  Batch size = %d", args.train_batch_size)
         logger.info("  Num epoch = %d", args.num_train_epochs)
-        
 
         model.train()
-        dev_dataset={}
+        dev_dataset = {}
         not_loss_dec_cnt = 0
-        nb_tr_examples, nb_tr_steps, tr_loss, global_step, best_bleu, best_loss = 0, 0, 0, 0, 0, 1e6 
+        nb_tr_examples, nb_tr_steps, tr_loss, global_step, best_bleu, best_loss = 0, 0, 0, 0, 0, 1e6
         for epoch in range(args.num_train_epochs):
-            bar = tqdm(train_dataloader,total=len(train_dataloader))
+            bar = tqdm(train_dataloader, total=len(train_dataloader))
             for batch in bar:
                 batch = tuple(t.to(device) for t in batch)
                 inputs, labels, attn_mask, loss_mask = batch
 
-                loss,_,_ = model(inputs=inputs, labels=labels, attn_mask=attn_mask, loss_mask=loss_mask, pred=False)
+                loss, _, _ = model(inputs=inputs, labels=labels, attn_mask=attn_mask, loss_mask=loss_mask, pred=False)
 
                 if args.n_gpu > 1:
-                    loss = loss.mean() # mean() to average on multi-gpu.
+                    loss = loss.mean()  # mean() to average on multi-gpu.
                 if args.gradient_accumulation_steps > 1:
                     loss = loss / args.gradient_accumulation_steps
                 tr_loss += loss.item()
-                train_loss=round(tr_loss*args.gradient_accumulation_steps/(nb_tr_steps+1),4)
-                bar.set_description("epoch {} loss {}".format(epoch,train_loss))
+                train_loss = round(tr_loss * args.gradient_accumulation_steps / (nb_tr_steps + 1), 4)
+                bar.set_description("epoch {} loss {}".format(epoch, train_loss))
                 nb_tr_examples += inputs.size(0)
                 nb_tr_steps += 1
                 loss.backward()
 
                 if (nb_tr_steps + 1) % args.gradient_accumulation_steps == 0:
-                    #Update parameters
+                    # Update parameters
                     optimizer.step()
                     optimizer.zero_grad()
                     scheduler.step()
                     global_step += 1
 
             if args.do_eval:
-                #Eval model with dev dataset
+                # Eval model with dev dataset
                 tr_loss = 0
-                nb_tr_examples, nb_tr_steps = 0, 0                     
-                eval_flag=False    
+                nb_tr_examples, nb_tr_steps = 0, 0
+                eval_flag = False
                 if 'dev_loss' in dev_dataset:
-                    eval_examples,eval_data=dev_dataset['dev_loss']
+                    eval_examples, eval_data = dev_dataset['dev_loss']
                 else:
                     eval_examples = read_examples(args.dev_filename)
-                    eval_features = convert_examples_to_features(eval_examples, tokenizer, args,stage='train')
-                    eval_data = TextDataset(eval_features,args)
-                    dev_dataset['dev_loss']=eval_examples,eval_data
+                    eval_features = convert_examples_to_features(eval_examples, tokenizer, args, stage='train')
+                    eval_data = TextDataset(eval_features, args)
+                    dev_dataset['dev_loss'] = eval_examples, eval_data
                 eval_sampler = SequentialSampler(eval_data)
                 eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size)
 
@@ -469,30 +477,30 @@ def main():
                 logger.info("  Num examples = %d", len(eval_examples))
                 logger.info("  Batch size = %d", args.eval_batch_size)
 
-                #Start Evaling model
+                # Start Evaling model
                 model.eval()
-                eval_loss,tokens_num = 0,0
+                eval_loss, tokens_num = 0, 0
                 for batch in eval_dataloader:
                     batch = tuple(t.to(device) for t in batch)
-                    inputs, labels, attn_mask, loss_mask = batch                  
+                    inputs, labels, attn_mask, loss_mask = batch
 
                     with torch.no_grad():
-                        _,loss,num = model(inputs=inputs, labels=labels, \
-                            attn_mask=attn_mask, loss_mask=loss_mask, pred=False)     
-                        
+                        _, loss, num = model(inputs=inputs, labels=labels, \
+                                             attn_mask=attn_mask, loss_mask=loss_mask, pred=False)
+
                     eval_loss += loss.sum().item()
                     tokens_num += num.sum().item()
-                #Pring loss of dev dataset    
+                # Pring loss of dev dataset
                 model.train()
                 eval_loss = eval_loss / tokens_num
                 result = {
-                    'eval_ppl': round(np.exp(eval_loss),5),
-                    'global_step': global_step+1,
-                    'train_loss': round(train_loss,5)
+                    'eval_ppl': round(np.exp(eval_loss), 5),
+                    'global_step': global_step + 1,
+                    'train_loss': round(train_loss, 5)
                 }
                 for key in sorted(result.keys()):
                     logger.info("  %s = %s", key, str(result[key]))
-                logger.info("  "+"*"*20)   
+                logger.info("  " + "*" * 20)
 
                 # #save last checkpoint
                 # last_output_dir = os.path.join(args.output_dir, 'checkpoint-last')
@@ -502,17 +510,17 @@ def main():
                 # output_model_file = os.path.join(last_output_dir, "pytorch_model.bin")
                 # torch.save(model_to_save.state_dict(), output_model_file)
                 if eval_loss < best_loss:
-                    logger.info("  Best ppl:%s",round(np.exp(eval_loss),5))
-                    logger.info("  "+"*"*20)
-                    fa.write("[%d] Best ppl changed into %.4f\n" % (epoch, round(np.exp(eval_loss),5)))
-                    best_loss=eval_loss
+                    logger.info("  Best ppl:%s", round(np.exp(eval_loss), 5))
+                    logger.info("  " + "*" * 20)
+                    fa.write("[%d] Best ppl changed into %.4f\n" % (epoch, round(np.exp(eval_loss), 5)))
+                    best_loss = eval_loss
                     # Save best checkpoint for best ppl
                     output_dir = os.path.join(args.output_dir, 'checkpoint-best-ppl')
                     if not os.path.exists(output_dir):
                         os.makedirs(output_dir)
                     model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
                     output_model_file = os.path.join(output_dir, "{}.bin".format(args.beam_size))
-                    torch.save(model_to_save.state_dict(), output_model_file)  
+                    torch.save(model_to_save.state_dict(), output_model_file)
                 else:
                     not_loss_dec_cnt += 1
                     logger.info("Ppl does not decrease for %d epochs", not_loss_dec_cnt)
@@ -540,6 +548,7 @@ def main():
         if args.do_train:
             model = model_to_save
         test(args, model, tokenizer, device, -1)
-        
+
+
 if __name__ == "__main__":
     main()
