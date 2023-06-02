@@ -560,5 +560,5 @@ def main():
 if __name__ == "__main__":
     # main()
     read_examples(
-        "../data/fine_tune_data/gptdata/buggy_methods_val_ori.txt,../data/fine_tune_data/gptdata/fixed_methods_val_ori.txt",
+        "../data/fine_tune_data/gptdata/buggy_methods_train_ori.txt,../data/fine_tune_data/gptdata/fixed_methods_train_ori.txt",
         0.2)

@@ -14,7 +14,7 @@ python run.py \
         --output_dir ./24-Jan-2023/ \
         --max_source_length 512 \
         --max_target_length 512 \
-        --beam_size 5 \
+        --beam_size 50 \
         --train_batch_size 8 \
         --eval_batch_size 8 \
         --learning_rate 5e-5 \
@@ -26,13 +26,13 @@ python run.py \
 python run.py \
          --do_test \
          --model_type gpt2 \
-         --load_model_path ./24-Jan-2023/checkpoint-last/pytorch_model.bin \
+         --load_model_path ./24-Jan-2023/checkpoint-best-ppl/pytorch_model.bin \
          --model_name_or_path microsoft/CodeGPT-small-java-adaptedGPT2 \
          --test_filename ../data/fine_tune_data/gptdata/buggy_methods_test_ori.txt,../data/fine_tune_data/gptdata/fixed_methods_test_ori.txt \
          --output_dir ./24-Jan-2023/ \
          --max_source_length 512 \
          --max_target_length 512 \
-         --beam_size 5 \
+         --beam_size 50 \
          --train_batch_size 8 \
          --eval_batch_size 8 \
          --learning_rate 5e-5 \
